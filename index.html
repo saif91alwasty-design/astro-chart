@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>حساب الخارطة الفلكية (JavaScript نقي 100%)</title>
-    
+
     <!-- مكتبة NASA للحسابات الفلكية (JavaScript نقية 100%) -->
     <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
     <!-- مكتبة رسم الخارطة -->
     <script src="https://cdn.jsdelivr.net/npm/@astrodraw/astrochart@2.0.0/dist/astrochart.min.js"></script>
-    
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -65,7 +65,7 @@
 <div class="container">
     <h1>🌟 الخارطة الفلكية الشخصية</h1>
     <p class="subtitle">محسوبة بدقة باستخدام خوارزميات NASA (JavaScript نقي 100%)</p>
-    
+
     <form id="chartForm">
         <div class="form-group">
             <label>الاسم:</label>
@@ -123,7 +123,7 @@
         const errorDiv = document.getElementById('error');
         const resultDiv = document.getElementById('result');
         const submitBtn = document.getElementById('submitBtn');
-        
+
         errorDiv.style.display = 'none';
         resultDiv.style.display = 'none';
         submitBtn.disabled = true;
@@ -134,7 +134,7 @@
             const dateInput = document.getElementById('date').value;
             const timeInput = document.getElementById('time').value;
             const cityData = document.getElementById('city').value.split(',');
-            
+
             if (!dateInput || !timeInput) {
                 throw new Error("يرجى إدخال التاريخ والوقت بشكل صحيح.");
             }
@@ -143,13 +143,21 @@
             const lng = parseFloat(cityData[1]);
             const cityName = cityData[2];
 
-            // ✅ الحل الجذري: استخدام المعيار الدولي ISO 8601 لضمان عدم فشل المتصفح
-            const isoString = `${dateInput}T${timeInput}:00`;
-            const date = new Date(isoString);
+            // ✅ الحل: تحويل التاريخ والوقت إلى UTC يدوياً لتجنب مشاكل المنطقة الزمنية
+            const [year, month, day] = dateInput.split('-').map(Number);
+            const [hour, minute] = timeInput.split(':').map(Number);
+
+            // التحقق من صحة القيم
+            if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+                throw new Error("تنسيق التاريخ أو الوقت غير صالح. يرجى التأكد من إدخالهما بشكل صحيح.");
+            }
+
+            // إنشاء التاريخ بصيغة UTC (شهر في JavaScript يبدأ من 0)
+            const date = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
 
             // التحقق من صحة التاريخ
             if (isNaN(date.getTime())) {
-                throw new Error("تنسيق التاريخ أو الوقت غير صالح. يرجى التأكد من إدخالهما بشكل صحيح.");
+                throw new Error("التاريخ المدخل غير صالح.");
             }
 
             const observer = new Astronomy.Observer(lat, lng, 0);
@@ -173,7 +181,7 @@
 
             // عرض النتائج
             document.getElementById('resultName').textContent = `خارطة ${name} - ${cityName}`;
-            
+
             let detailsHTML = `
                 <div class="planet-info"><strong>☀️ الشمس:</strong> برج ${sunInfo.name} (الدرجة ${sunInfo.degree}°)</div>
                 <div class="planet-info"><strong>🌙 القمر:</strong> برج ${moonInfo.name} (الدرجة ${moonInfo.degree}°)</div>
