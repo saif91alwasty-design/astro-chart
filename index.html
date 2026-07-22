@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> خريطتي</title>
+    <title>🌟 خريطتي</title>
     <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,6 +17,7 @@
             backdrop-filter: blur(20px); padding: 30px; border-radius: 20px;
         }
         h1 { text-align: center; color: #ffd700; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 25px; font-size: 0.9em; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; color: #ffd700; font-weight: bold; }
         input, select {
@@ -26,16 +27,16 @@
         button {
             width: 100%; padding: 15px; background: linear-gradient(135deg, #ffd700, #ff9500);
             color: #1a1a2e; border: none; border-radius: 10px; font-size: 18px;
-            font-weight: bold; cursor: pointer; margin-top: 10px;
+            font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s;
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,215,0,0.3); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        /* المربع الأسود التشخيصي - يظهر دائماً عند الخطأ */
         .debug-box {
-            background: #000; border: 2px solid #ff0000; border-radius: 10px;
+            background: #000; border: 1px solid #ff0000; border-radius: 10px;
             padding: 15px; margin-top: 20px; font-family: monospace; 
             font-size: 0.75em; color: #00ff00; direction: ltr; text-align: left;
-            display: none; white-space: pre-wrap; max-height: 300px; overflow-y: auto;
+            display: none; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
         }
         .error-box {
             background: rgba(255,0,0,0.2); border: 1px solid #ff4444; color: #ff8888;
@@ -44,14 +45,18 @@
         #result { margin-top: 30px; display: none; }
         .planet-card {
             background: rgba(255,255,255,0.1); padding: 15px; margin: 10px 0;
-            border-radius: 10px; border-right: 4px solid #ffd700;
+            border-radius: 10px; border-right: 4px solid #ffd700; display: flex; align-items: center; gap: 15px;
         }
+        .planet-emoji { font-size: 2em; }
+        .planet-name { font-weight: bold; color: #ffd700; font-size: 1.1em; }
+        .planet-info { color: #ddd; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🌙 خريطتي</h1>
+    <p class="subtitle">اكتشف أسرار شخصيتك من خلال مواقع الكواكب عند ميلادك</p>
     
     <form id="chartForm">
         <div class="form-group">
@@ -73,9 +78,10 @@
                 <option value="33.3152,44.3661,بغداد">بغداد، العراق</option>
                 <option value="30.0444,31.2357,القاهرة">القاهرة، مصر</option>
                 <option value="24.7136,46.6753,الرياض">الرياض، السعودية</option>
+                <option value="25.2048,55.2708,دبي">دبي، الإمارات</option>
             </select>
         </div>
-        <button type="submit" id="submitBtn">احسب الخارطة</button>
+        <button type="submit" id="submitBtn">✨ احسب الخارطة الفلكية</button>
     </form>
 
     <div class="error-box" id="errorBox"></div>
@@ -85,6 +91,15 @@
 
 <script>
 const SIGNS_AR = ['الحمل', 'الثور', 'الجوزاء', 'السرطان', 'الأسد', 'العذراء', 'الميزان', 'العقرب', 'القوس', 'الجدي', 'الدلو', 'الحوت'];
+const PLANETS = [
+    { key: 'Sun', name: 'الشمس', emoji: '☀️' },
+    { key: 'Moon', name: 'القمر', emoji: '🌙' },
+    { key: 'Mercury', name: 'عطارد', emoji: '☿️' },
+    { key: 'Venus', name: 'الزهرة', emoji: '♀️' },
+    { key: 'Mars', name: 'المريخ', emoji: '♂️' },
+    { key: 'Jupiter', name: 'المشتري', emoji: '♃' },
+    { key: 'Saturn', name: 'زحل', emoji: '♄' }
+];
 
 document.getElementById('chartForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -99,20 +114,12 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
     resultDiv.style.display = 'none';
     submitBtn.disabled = true;
     
-    let debugLog = '=== DEBUG LOG ===\n';
-    
     try {
-        // الخطوة 1: قراءة القيم
-        debugLog += 'Step 1: Reading values...\n';
-        const name = document.getElementById('name').value;
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
         const cityData = document.getElementById('city').value.split(',');
+        const name = document.getElementById('name').value || 'مستخدم';
         
-        debugLog += `Date: "${dateVal}"\nTime: "${timeVal}"\nCity: ${cityData[2]}\n`;
-        
-        // الخطوة 2: تحليل الأرقام
-        debugLog += '\nStep 2: Parsing numbers...\n';
         const [yStr, mStr, dStr] = dateVal.split('-');
         const [hrStr, minStr] = timeVal.split(':');
         
@@ -123,86 +130,74 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         const min = parseInt(minStr, 10);
         const lat = parseFloat(cityData[0]);
         const lng = parseFloat(cityData[1]);
-        
-        debugLog += `Y:${y} M:${m} D:${d} HR:${hr} MIN:${min}\n`;
-        debugLog += `Lat:${lat} Lng:${lng}\n`;
-        
-        // التحقق من الصلاحية
-        if ([y, m, d, hr, min, lat, lng].some(isNaN)) {
-            throw new Error('Invalid number detected');
-        }
-        
-        // الخطوة 3: إنشاء التاريخ
-        debugLog += '\nStep 3: Creating Date object...\n';
+        const cityName = cityData[2];
+
+        // إنشاء التاريخ بتوقيت UTC لمنع مشاكل المناطق الزمنية
         const targetDate = new Date(Date.UTC(y, m - 1, d, hr, min, 0, 0));
-        debugLog += `Date Object: ${targetDate}\n`;
-        debugLog += `Date Time: ${targetDate.getTime()}\n`;
-        
-        if (isNaN(targetDate.getTime())) {
-            throw new Error('Invalid Date object created');
-        }
-        
-        // الخطوة 4: إنشاء الراصد
-        debugLog += '\nStep 4: Creating Observer...\n';
         const observer = new Astronomy.Observer(lat, lng, 0);
-        debugLog += `Observer created successfully\n`;
         
-        // الخطوة 5: اختبار المكتبة
-        debugLog += '\nStep 5: Testing astronomy library...\n';
-        debugLog += `Astronomy object: ${typeof Astronomy}\n`;
-        debugLog += `Astronomy.Equator: ${typeof Astronomy.Equator}\n`;
-        debugLog += `Astronomy.Body.Sun: ${Astronomy.Body.Sun}\n`;
-        
-        // الخطوة 6: الحساب الفعلي
-        debugLog += '\nStep 6: Calculating Sun position...\n';
-        let eq, ecl, sign;
-        
-        try {
-            eq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, observer, true, true);
-            debugLog += `Equator result: ${JSON.stringify(eq, null, 2)}\n`;
+        let html = `<h2 style="color:#ffd700; text-align:center; margin-bottom:20px;">✨ خارطة ${name}</h2>`;
+        html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;">📅 ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}</p>`;
+
+        // حساب الكواكب
+        PLANETS.forEach(p => {
+            // 1. حساب الإحداثيات الاستوائية
+            const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, observer, true, true);
             
-            ecl = Astronomy.Ecliptic(eq);
-            debugLog += `Ecliptic result: ${JSON.stringify(ecl, null, 2)}\n`;
-            
-            if (!ecl || typeof ecl.elon === 'undefined') {
-                throw new Error('Ecliptic.elon is undefined');
+            // 🛠️ الحل السحري للخطأ: نسخ كائن الوقت إلى الجذر لإصلاح خلل المكتبة
+            if (!eq.t && eq.vec && eq.vec.t) {
+                eq.t = eq.vec.t;
             }
             
-            // الخطوة 7: حساب البرج
-            debugLog += '\nStep 7: Calculating zodiac sign...\n';
+            // 2. تحويل إلى إحداثيات كسوفية (Ecliptic)
+            const ecl = Astronomy.Ecliptic(eq);
+            
+            // 3. حساب البرج والدرجة
             let lon = ecl.elon % 360;
             if (lon < 0) lon += 360;
             const signIndex = Math.floor(lon / 30);
             const degree = (lon % 30).toFixed(2);
-            sign = SIGNS_AR[signIndex];
+            const signName = SIGNS_AR[signIndex];
             
-            debugLog += `Longitude: ${lon}\nSign Index: ${signIndex}\nSign: ${sign}\nDegree: ${degree}\n`;
-            
-            // الخطوة 8: عرض النتائج
-            debugLog += '\nStep 8: Displaying results...\n';
-            let html = `<h2 style="color:#ffd700;text-align:center;margin-bottom:20px;">خارطة ${name}</h2>`;
-            html += `<div class="planet-card"><strong>☀️ الشمس:</strong> برج ${sign} (${degree}°)</div>`;
-            
-            resultDiv.innerHTML = html;
-            resultDiv.style.display = 'block';
-            debugLog += '\n=== SUCCESS ===\n';
-            
-        } catch (astroErr) {
-            debugLog += `\nASTRO ERROR: ${astroErr.message}\n`;
-            debugLog += `Stack: ${astroErr.stack}\n`;
-            throw astroErr;
-        }
+            html += `
+                <div class="planet-card">
+                    <div class="planet-emoji">${p.emoji}</div>
+                    <div>
+                        <div class="planet-name">${p.name}</div>
+                        <div class="planet-info">♈ برج ${signName} | 📐 الدرجة ${degree}°</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // حساب تقريبي للطالع
+        const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, observer, true, true);
+        if (!sunEq.t && sunEq.vec && sunEq.vec.t) sunEq.t = sunEq.vec.t;
+        const sunEcl = Astronomy.Ecliptic(sunEq);
+        const ascIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(hr / 2)) % 12;
+        const ascName = SIGNS_AR[ascIndex >= 0 ? ascIndex : ascIndex + 12];
         
+        html += `
+            <div class="planet-card" style="border-right-color: #ff6b6b; background: rgba(255,107,107,0.1);">
+                <div class="planet-emoji">⬆️</div>
+                <div>
+                    <div class="planet-name">الطالع (Ascendant) - تقريبي</div>
+                    <div class="planet-info">♈ برج ${ascName}</div>
+                </div>
+            </div>
+        `;
+
+        resultDiv.innerHTML = html;
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+
     } catch (err) {
-        debugLog += `\nFATAL ERROR: ${err.message}\n`;
-        debugLog += `Stack: ${err.stack}\n`;
-        
-        errorBox.innerHTML = `<strong>⚠️ خطأ:</strong> ${err.message}`;
+        console.error("FATAL ERROR:", err);
+        errorBox.innerHTML = `<strong>⚠️ خطأ غير متوقع:</strong><br>${err.message}`;
         errorBox.style.display = 'block';
         
-        debugBox.textContent = debugLog;
+        debugBox.textContent = `Error Stack:\n${err.stack}`;
         debugBox.style.display = 'block';
-        debugBox.scrollIntoView({ behavior: 'smooth' });
     } finally {
         submitBtn.disabled = false;
     }
