@@ -111,26 +111,29 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
 
         const targetDate = new Date(Date.UTC(y, m - 1, d, hr, min, 0, 0));
         
+        // 🎯 الحل السحري: Observer في مركز الأرض (0,0,0) = إحداثيات مركزية أرضية
+        const centerObserver = new Astronomy.Observer(0, 0, 0);
+        
         let html = `<h2 style="color:#ffd700; text-align:center; margin-bottom:20px;">✨ خارطة ${name}</h2>`;
-        html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;">📅 ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}</p>`;
+        html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;"> ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}</p>`;
 
         const PLANETS = [
             { key: 'Sun', name: 'الشمس', emoji: '☀️' },
             { key: 'Moon', name: 'القمر', emoji: '🌙' },
-            { key: 'Mercury', name: 'عطارد', emoji: '☿️' },
+            { key: 'Mercury', name: 'عطارد', emoji: '️' },
             { key: 'Venus', name: 'الزهرة', emoji: '♀️' },
-            { key: 'Mars', name: 'المريخ', emoji: '♂️' },
-            { key: 'Jupiter', name: 'المشتري', emoji: '♃' },
+            { key: 'Mars', name: 'المريخ', emoji: '️' },
+            { key: 'Jupiter', name: 'المشتري', emoji: '' },
             { key: 'Saturn', name: 'زحل', emoji: '♄' }
         ];
         const SIGNS_AR = ['الحمل', 'الثور', 'الجوزاء', 'السرطان', 'الأسد', 'العذراء', 'الميزان', 'العقرب', 'القوس', 'الجدي', 'الدلو', 'الحوت'];
 
-        // 🎯 الحل السحري: استخدام EclipticGeo مباشرة (بدون Equator وبدون Observer)
         for (let i = 0; i < PLANETS.length; i++) {
             const p = PLANETS[i];
             
-            // استخدام EclipticGeo - تحسب الإحداثيات الكسوفية المركزية الأرضية مباشرة
-            const ecl = Astronomy.EclipticGeo(Astronomy.Body[p.key], targetDate);
+            // استخدام Observer في مركز الأرض (Geocentric)
+            const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, centerObserver, true, true);
+            const ecl = Astronomy.Ecliptic(eq);
             
             let lon = ecl.elon % 360;
             if (lon < 0) lon += 360;
@@ -150,13 +153,14 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         }
         
         // حساب تقريبي للطالع
-        const sunEcl = Astronomy.EclipticGeo(Astronomy.Body.Sun, targetDate);
+        const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, centerObserver, true, true);
+        const sunEcl = Astronomy.Ecliptic(sunEq);
         const ascIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(hr / 2)) % 12;
         const ascName = SIGNS_AR[ascIndex >= 0 ? ascIndex : ascIndex + 12];
         
         html += `
             <div class="planet-card special-card">
-                <div class="planet-emoji">⬆️</div>
+                <div class="planet-emoji">️</div>
                 <div>
                     <div class="planet-name">الطالع (Ascendant) - تقريبي</div>
                     <div class="planet-info">♈ برج ${ascName}</div>
