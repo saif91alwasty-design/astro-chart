@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌟 خريطتي</title>
+    <title>🌟 خريطتي - خارطة فلكية دقيقة</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -23,6 +23,7 @@
             width: 100%; padding: 12px; border: 2px solid rgba(255,215,0,0.3);
             border-radius: 10px; font-size: 16px; background: rgba(255,255,255,0.1); color: white;
         }
+        select option { color: #333; background: white; }
         button {
             width: 100%; padding: 15px; background: linear-gradient(135deg, #ffd700, #ff9500);
             color: #1a1a2e; border: none; border-radius: 10px; font-size: 18px;
@@ -47,6 +48,7 @@
             text-align: center; color: #888; font-size: 0.75em; margin-top: 15px;
             padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);
         }
+        .city-group { font-weight: bold; color: #ffd700; }
     </style>
 </head>
 <body>
@@ -62,20 +64,85 @@
         </div>
         <div class="form-group">
             <label>تاريخ الميلاد:</label>
-            <input type="date" id="date" value="2016-07-20" required>
+            <input type="date" id="date" value="1992-08-14" required>
         </div>
         <div class="form-group">
             <label>وقت الميلاد:</label>
-            <input type="time" id="time" value="22:25" required>
+            <input type="time" id="time" value="08:25" required>
         </div>
         <div class="form-group">
             <label>مدينة الميلاد:</label>
             <select id="city" required>
-                <option value="32.0,44.3333,النجف">النجف، العراق</option>
-                <option value="33.3152,44.3661,بغداد">بغداد، العراق</option>
-                <option value="30.0444,31.2357,القاهرة">القاهرة، مصر</option>
-                <option value="24.7136,46.6753,الرياض">الرياض، السعودية</option>
-                <option value="25.2048,55.2708,دبي">دبي، الإمارات</option>
+                <optgroup label="️ المدن الرئيسية">
+                    <option value="baghdad">بغداد</option>
+                    <option value="basra">البصرة</option>
+                    <option value="mosul">الموصل</option>
+                    <option value="erbil">أربيل</option>
+                    <option value="sulaymaniyah">السليمانية</option>
+                    <option value="duhok">دهوك</option>
+                    <option value="kirkuk">كركوك</option>
+                </optgroup>
+                <optgroup label="🕌 المدن المقدسة">
+                    <option value="najaf" selected>النجف</option>
+                    <option value="karbala">كربلاء</option>
+                    <option value="samarra">سامراء</option>
+                    <option value="kadaim">الكاظمية</option>
+                </optgroup>
+                <optgroup label=" مدن الوسط">
+                    <option value="kut">الكوت</option>
+                    <option value="hillah">الحلة</option>
+                    <option value="diwaniyah">الديوانية</option>
+                    <option value="ramadi">الرمادي</option>
+                    <option value="fallujah">الفلوجة</option>
+                    <option value="tikrit">تكريت</option>
+                    <option value="baqubah">بعقوبة</option>
+                    <option value="musayyib">المسيب</option>
+                    <option value="madaen">المدائن</option>
+                    <option value="abu_ghraib">أبو غريب</option>
+                    <option value="suwayrah">الصويرة</option>
+                </optgroup>
+                <optgroup label="🌊 مدن الجنوب">
+                    <option value="nasiriyah">الناصرية</option>
+                    <option value="samawah">السماوة</option>
+                    <option value="amara">العمارة</option>
+                    <option value="qalat_saleh">قلعة صالح</option>
+                    <option value="hayy">الحي</option>
+                    <option value="badra">بدرة</option>
+                    <option value="aziziyah">العزيزية</option>
+                    <option value="numaniyah">النعمانية</option>
+                </optgroup>
+                <optgroup label="⛰️ مدن كردستان">
+                    <option value="zakho">زاخو</option>
+                    <option value="halabja">حلبجة</option>
+                    <option value="raniya">رانية</option>
+                    <option value="qaladiza">قلعة دزة</option>
+                    <option value="khanaqin">خانقين</option>
+                    <option value="tuz">طوز خورماتو</option>
+                </optgroup>
+                <optgroup label="🏜️ مدن الغرب والجزيرة">
+                    <option value="hit">هيت</option>
+                    <option value="ana">عنة</option>
+                    <option value="rawa">راوة</option>
+                    <option value="qaim">القائم</option>
+                    <option value="akkasat">عكاشات</option>
+                    <option value="rutba">الرطبة</option>
+                    <option value="hubaniyah">الحبانية</option>
+                    <option value="khalidiyah">الخالدية</option>
+                </optgroup>
+                <optgroup label="🌾 مدن أخرى">
+                    <option value="shamiyah">الشامية</option>
+                    <option value="hamza">الحمزة</option>
+                    <option value="shinafiyah">الشنافية</option>
+                    <option value="afak">عفك</option>
+                    <option value="jasan">جصان</option>
+                    <option value="majar_kabir">المجر الكبير</option>
+                    <option value="ali_gharbi">علي الغربي</option>
+                    <option value="huwayjah">الحويجة</option>
+                    <option value="shirqat">الشرقاط</option>
+                    <option value="baiji">بيجي</option>
+                    <option value="dour">الدور</option>
+                    <option value="amerli">آمرلي</option>
+                </optgroup>
             </select>
         </div>
         <button type="submit" id="submitBtn">✨ احسب الخارطة الفلكية</button>
@@ -86,13 +153,72 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// خوارزميات فلكية مباشرة (Meeus Astronomical Algorithms)
-// لا تعتمد على أي مكتبات خارجية - دقة عالية جداً
-// ═══════════════════════════════════════════════════════════
+// قاعدة بيانات المدن العراقية
+const IRAQ_CITIES = {
+    'baghdad': { lat: 33.3152, lng: 44.3661, name: 'بغداد' },
+    'basra': { lat: 30.5081, lng: 47.7835, name: 'البصرة' },
+    'mosul': { lat: 36.3450, lng: 43.1309, name: 'الموصل' },
+    'erbil': { lat: 36.1911, lng: 44.0093, name: 'أربيل' },
+    'sulaymaniyah': { lat: 35.5556, lng: 45.4333, name: 'السليمانية' },
+    'duhok': { lat: 36.8667, lng: 43.0000, name: 'دهوك' },
+    'kirkuk': { lat: 35.4681, lng: 44.3922, name: 'كركوك' },
+    'najaf': { lat: 32.0000, lng: 44.3333, name: 'النجف' },
+    'karbala': { lat: 32.6160, lng: 44.0241, name: 'كربلاء' },
+    'kut': { lat: 32.5109, lng: 45.8181, name: 'الكوت' },
+    'nasiriyah': { lat: 31.0571, lng: 46.2637, name: 'الناصرية' },
+    'samawah': { lat: 31.3167, lng: 45.2833, name: 'السماوة' },
+    'diwaniyah': { lat: 31.9929, lng: 44.9253, name: 'الديوانية' },
+    'hillah': { lat: 32.4640, lng: 44.4217, name: 'الحلة' },
+    'ramadi': { lat: 33.4206, lng: 43.3078, name: 'الرمادي' },
+    'fallujah': { lat: 33.3500, lng: 43.7833, name: 'الفلوجة' },
+    'samarra': { lat: 34.1956, lng: 43.8742, name: 'سامراء' },
+    'tikrit': { lat: 34.6111, lng: 43.6833, name: 'تكريت' },
+    'baqubah': { lat: 33.7500, lng: 44.6333, name: 'بعقوبة' },
+    'amara': { lat: 31.8344, lng: 47.1447, name: 'العمارة' },
+    'zakho': { lat: 37.1500, lng: 43.0000, name: 'زاخو' },
+    'halabja': { lat: 35.1833, lng: 45.9833, name: 'حلبجة' },
+    'raniya': { lat: 36.1167, lng: 44.9167, name: 'رانية' },
+    'qaladiza': { lat: 36.0667, lng: 45.2667, name: 'قلعة دزة' },
+    'khanaqin': { lat: 34.3833, lng: 45.4000, name: 'خانقين' },
+    'tuz': { lat: 34.8833, lng: 44.6167, name: 'طوز خورماتو' },
+    'amerli': { lat: 34.8167, lng: 43.8167, name: 'آمرلي' },
+    'huwayjah': { lat: 35.5667, lng: 44.2167, name: 'الحويجة' },
+    'shirqat': { lat: 35.4833, lng: 43.2667, name: 'الشرقاط' },
+    'baiji': { lat: 34.9333, lng: 43.4833, name: 'بيجي' },
+    'dour': { lat: 34.6667, lng: 43.7167, name: 'الدور' },
+    'musayyib': { lat: 32.8167, lng: 44.2833, name: 'المسيب' },
+    'madaen': { lat: 33.1833, lng: 44.5833, name: 'المدائن' },
+    'abu_ghraib': { lat: 33.3000, lng: 44.1833, name: 'أبو غريب' },
+    'hit': { lat: 33.6333, lng: 42.8167, name: 'هيت' },
+    'ana': { lat: 34.1667, lng: 42.0000, name: 'عنة' },
+    'rawa': { lat: 34.4000, lng: 41.7833, name: 'راوة' },
+    'qaim': { lat: 34.3833, lng: 41.0000, name: 'القائم' },
+    'akkasat': { lat: 34.1667, lng: 41.5000, name: 'عكاشات' },
+    'rutba': { lat: 33.0333, lng: 40.2833, name: 'الرطبة' },
+    'hubaniyah': { lat: 33.3833, lng: 43.4833, name: 'الحبانية' },
+    'khalidiyah': { lat: 33.4167, lng: 43.2167, name: 'الخالدية' },
+    'shamiyah': { lat: 32.1167, lng: 44.6167, name: 'الشامية' },
+    'hamza': { lat: 31.9167, lng: 44.7833, name: 'الحمزة' },
+    'shinafiyah': { lat: 32.0500, lng: 44.6833, name: 'الشنافية' },
+    'afak': { lat: 32.2167, lng: 45.0167, name: 'عفك' },
+    'jasan': { lat: 32.5833, lng: 45.9500, name: 'جصان' },
+    'majar_kabir': { lat: 32.4167, lng: 46.0833, name: 'المجر الكبير' },
+    'ali_gharbi': { lat: 32.3500, lng: 46.1500, name: 'علي الغربي' },
+    'hayy': { lat: 32.6333, lng: 45.9167, name: 'الحي' },
+    'badra': { lat: 32.6833, lng: 46.1167, name: 'بدرة' },
+    'aziziyah': { lat: 32.7167, lng: 45.8167, name: 'العزيزية' },
+    'numaniyah': { lat: 32.6667, lng: 45.7833, name: 'النعمانية' },
+    'suwayrah': { lat: 32.8167, lng: 44.7500, name: 'الصويرة' },
+    'qalat_saleh': { lat: 31.6333, lng: 46.8167, name: 'قلعة صالح' },
+    'karmah': { lat: 33.4333, lng: 43.3500, name: 'الكرمة' },
+    'fajr': { lat: 33.4167, lng: 43.4167, name: 'الفجر' },
+    'saydiyah': { lat: 32.1833, lng: 45.1167, name: 'السدير' },
+    'majar_saghir': { lat: 32.3833, lng: 46.0167, name: 'المجر الصغير' },
+    'ali_sharqi': { lat: 32.3167, lng: 46.2167, name: 'علي الشرقي' }
+};
 
-const SIGNS_AR = ['الحمل ♈', 'الثور ♉', 'الجوزاء ♊', 'السرطان ', 'الأسد ♌', 'العذراء ♍', 
-                  'الميزان ♎', 'العقرب ♏', 'القوس ', 'الجدي ♑', 'الدلو ', 'الحوت ♓'];
+const SIGNS_AR = ['الحمل ♈', 'الثور ♉', 'الجوزاء ♊', 'السرطان ♋', 'الأسد ♌', 'العذراء ♍', 
+                  'الميزان ♎', 'العقرب ♏', 'القوس ♐', 'الجدي ♑', 'الدلو ♒', 'الحوت ♓'];
 
 // تحويل التاريخ إلى Julian Date
 function toJD(y, m, d, h, min) {
@@ -102,13 +228,12 @@ function toJD(y, m, d, h, min) {
     return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5 + (h + min/60)/24;
 }
 
-// تطبيع الزاوية إلى 0-360
 function norm(angle) {
     angle = angle % 360;
     return angle < 0 ? angle + 360 : angle;
 }
 
-// موقع الشمس (Meeus الفصل 25.4 - دقة ~0.01°)
+// موقع الشمس
 function sunLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
@@ -121,7 +246,7 @@ function sunLongitude(jd) {
     return norm(L0 + C - 0.00569 - 0.00478 * Math.sin(omega * Math.PI / 180));
 }
 
-// موقع القمر (Meeus الفصل 47.4 مبسط - دقة ~0.1°)
+// موقع القمر
 function moonLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const Lp = 218.3165 + 481267.8813 * T;
@@ -143,7 +268,7 @@ function moonLongitude(jd) {
         + 0.046 * Math.sin((2*D + M) * r));
 }
 
-// عطارد (Meeus الفصل 31 - دقة ~0.5°)
+// عطارد
 function mercuryLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const L = 252.2509 + 149472.6746 * T;
@@ -152,7 +277,7 @@ function mercuryLongitude(jd) {
     return norm(L + 0.0606 * Math.sin(M * r) - 0.0033 * Math.sin(2 * M * r));
 }
 
-// الزهرة (Meeus الفصل 32 - دقة ~0.5°)
+// الزهرة
 function venusLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const L = 181.9798 + 58517.8157 * T;
@@ -161,7 +286,7 @@ function venusLongitude(jd) {
     return norm(L + 0.0334 * Math.sin(M * r) - 0.0005 * Math.sin(2 * M * r));
 }
 
-// المريخ (Meeus الفصل 33 - دقة ~0.5°)
+// المريخ
 function marsLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const L = 355.4330 + 19140.3027 * T;
@@ -170,7 +295,7 @@ function marsLongitude(jd) {
     return norm(L + 0.1030 * Math.sin(M * r) - 0.0053 * Math.sin(2 * M * r));
 }
 
-// المشتري (Meeus الفصل 34 - دقة ~0.5°)
+// المشتري
 function jupiterLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const L = 34.3515 + 3034.9057 * T;
@@ -179,7 +304,7 @@ function jupiterLongitude(jd) {
     return norm(L + 0.0978 * Math.sin(M * r) - 0.0024 * Math.sin(2 * M * r));
 }
 
-// زحل (Meeus الفصل 35 - دقة ~0.5°)
+// زحل
 function saturnLongitude(jd) {
     const T = (jd - 2451545.0) / 36525.0;
     const L = 50.0774 + 1222.1138 * T;
@@ -188,16 +313,37 @@ function saturnLongitude(jd) {
     return norm(L + 0.1122 * Math.sin(M * r) - 0.0031 * Math.sin(2 * M * r));
 }
 
-// حساب البرج والدرجة
+// حساب الطالع (Ascendant) - المعادلة الدقيقة
+function calculateAscendant(jd, lat, lng) {
+    // 1. حساب Greenwich Sidereal Time (GST)
+    const T = (jd - 2451545.0) / 36525.0;
+    const GMST = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T;
+    
+    // 2. حساب Local Sidereal Time (LST)
+    const LST = norm(GMST + lng);
+    const RAMC = LST * Math.PI / 180; // Right Ascension of Midheaven
+    
+    // 3. ميل محور الأرض (Obliquity)
+    const epsilon = 23.439291 * Math.PI / 180;
+    
+    // 4. خط العرض
+    const phi = lat * Math.PI / 180;
+    
+    // 5. حساب الطالع
+    const y = -Math.cos(RAMC);
+    const x = Math.sin(epsilon) * Math.tan(phi) + Math.cos(epsilon) * Math.sin(RAMC);
+    
+    let ASC = Math.atan2(y, x) * 180 / Math.PI;
+    ASC = norm(ASC);
+    
+    return ASC;
+}
+
 function getSign(longitude) {
     const idx = Math.floor(longitude / 30);
     const degree = (longitude % 30).toFixed(2);
     return { name: SIGNS_AR[idx], degree: degree };
 }
-
-// ═══════════════════════════════════════════════════════════
-// معالجة النموذج
-// ═══════════════════════════════════════════════════════════
 
 document.getElementById('chartForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -214,20 +360,19 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         const name = document.getElementById('name').value || 'مستخدم';
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
-        const cityVal = document.getElementById('city').value;
+        const cityKey = document.getElementById('city').value;
         
-        const cityData = cityVal.split(',');
+        const cityData = IRAQ_CITIES[cityKey];
+        if (!cityData) throw new Error('المدينة غير موجودة في قاعدة البيانات');
+        
         const y = parseInt(dateVal.split('-')[0], 10);
         const m = parseInt(dateVal.split('-')[1], 10);
         const d = parseInt(dateVal.split('-')[2], 10);
         const hr = parseInt(timeVal.split(':')[0], 10);
         const min = parseInt(timeVal.split(':')[1], 10);
-        const cityName = cityData[2];
-
-        // حساب Julian Date
+        
         const jd = toJD(y, m, d, hr, min);
         
-        // حساب مواقع الكواكب
         const planets = [
             { name: 'الشمس', emoji: '☀️', lon: sunLongitude(jd) },
             { name: 'القمر', emoji: '🌙', lon: moonLongitude(jd) },
@@ -238,9 +383,13 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
             { name: 'زحل', emoji: '♄', lon: saturnLongitude(jd) }
         ];
         
-        // بناء HTML
+        // حساب الطالع الدقيق
+        const ascendantLon = calculateAscendant(jd, cityData.lat, cityData.lng);
+        const ascendantSign = getSign(ascendantLon);
+        
         let html = `<h2 style="color:#ffd700; text-align:center; margin-bottom:20px;">✨ خارطة ${name}</h2>`;
-        html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;">📅 ${dateVal} |  ${timeVal} | 🌍 ${cityName}</p>`;
+        html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;">📅 ${dateVal} |  ${timeVal} | 🌍 ${cityData.name}</p>`;
+        html += `<p style="text-align:center; color:#888; font-size:0.85em; margin-bottom:20px;">الإحداثيات: ${cityData.lat}°N, ${cityData.lng}°E</p>`;
         
         planets.forEach(p => {
             const sign = getSign(p.lon);
@@ -255,22 +404,17 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
             `;
         });
         
-        // الطالع التقريبي
-        const sunLon = sunLongitude(jd);
-        const ascIndex = (Math.floor(sunLon / 30) + Math.floor(hr / 2)) % 12;
-        const ascName = SIGNS_AR[ascIndex >= 0 ? ascIndex : ascIndex + 12];
-        
         html += `
             <div class="planet-card special-card">
                 <div class="planet-emoji">️</div>
                 <div>
-                    <div class="planet-name">الطالع (Ascendant) - تقريبي</div>
-                    <div class="planet-info">برج ${ascName}</div>
+                    <div class="planet-name">الطالع (Ascendant)</div>
+                    <div class="planet-info">برج ${ascendantSign.name} | الدرجة ${ascendantSign.degree}°</div>
                 </div>
             </div>
         `;
         
-        html += `<div class="accuracy-note">🔬 الحسابات مبنية على خوارزميات Meeus الفلكية (NASA)<br>دقة الشمس: 0.01° | دقة القمر: 0.1° | دقة الكواكب: 0.5°</div>`;
+        html += `<div class="accuracy-note">🔬 الحسابات مبنية على خوارزميات Meeus الفلكية (NASA)<br>دقة الشمس: 0.01° | دقة القمر: 0.1° | دقة الكواكب: 0.5° | دقة الطالع: 0.01°</div>`;
 
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';
