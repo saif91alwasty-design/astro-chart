@@ -34,8 +34,6 @@
         }
         button:hover { transform: translateY(-3px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        
-        /* كاشف الأخطاء التشخيصي المتقدم */
         .debug-box {
             background: #1a0505; border: 1px solid #ff4444; border-radius: 10px;
             padding: 15px; margin-top: 20px; font-family: 'Courier New', monospace; 
@@ -66,7 +64,8 @@
         .planet-sign { color: #ddd; font-size: 1em; }
         .planet-degree { color: #aaa; font-size: 0.85em; margin-top: 3px; }
         .special-card { border-right-color: #ff6b6b !important; background: rgba(255,107,107,0.05) !important; }
-    </style</head>
+    </style>
+</head>
 <body>
 
 <div class="container">
@@ -85,16 +84,15 @@
         </div>
         <div class="form-group">
             <label>⏰ وقت الميلاد:</label>
-            <!-- type="time" يضمن تنسيق 24 ساعة نظيف -->
             <input type="time" id="time" value="22:25" required>
         </div>
         <div class="form-group">
             <label>🌍 مدينة الميلاد:</label>
             <select id="city" required>
-                <option value="32.0,44.3333,النجف">🕌 النجف، العراق</option>
-                <option value="33.3152,44.3661,بغداد">🏛️ بغداد، العراق</option>
-                <option value="30.0444,31.2357,القاهرة">🐪 القاهرة، مصر</option>
-                <option value="24.7136,46.6753,الرياض">🏙️ الرياض، السعودية</option>
+                <option value="32.0,44.3333,النجف"> النجف، العراق</option>
+                <option value="33.3152,44.3661,بغداد">️ بغداد، العراق</option>
+                <option value="30.0444,31.2357,القاهرة"> القاهرة، مصر</option>
+                <option value="24.7136,46.6753,الرياض">️ الرياض، السعودية</option>
                 <option value="25.2048,55.2708,دبي">🏙️ دبي، الإمارات</option>
             </select>
         </div>
@@ -155,12 +153,10 @@
         submitBtn.disabled = true;
 
         try {
-            // 1. التعقيم القسري للمدخلات (لقتل أي أحرف خفية أو تنسيقات عربية تفسد المكتبة)
             const rawDate = document.getElementById('date').value;
             const rawTime = document.getElementById('time').value;
             const cityData = document.getElementById('city').value.split(',');
 
-            // إزالة أي شيء ليس رقماً أو نقطتين من الوقت
             const cleanTime = rawTime.replace(/[^0-9:]/g, ''); 
             const [yStr, mStr, dStr] = rawDate.split('-');
             const [hrStr, minStr] = cleanTime.split(':');
@@ -174,15 +170,12 @@
             const lng = parseFloat(cityData[1]);
             const cityName = cityData[2];
 
-            // 2. كاشف الأخطاء التشخيصي: إذا كان أي قيمة NaN، نوقف التنفيذ ونعرض السبب
             if ([y, m, d, hr, min, lat, lng].some(isNaN)) {
                 debugBox.innerHTML = `DIAGNOSTIC FAILURE:\nRaw Date: "${rawDate}"\nRaw Time: "${rawTime}"\nParsed -> Y:${y} M:${m} D:${d} HR:${hr} MIN:${min}\nLat:${lat} Lng:${lng}`;
                 debugBox.style.display = 'block';
                 throw new Error("فشل في قراءة التاريخ أو الوقت. يرجى التأكد من إدخالهما بتنسيق قياسي.");
             }
 
-            // 3. الحل السحري: استخدام Date.UTC يمنع المتصفح من تطبيق إزاحة المنطقة الزمنية المحلية 
-            // التي تسبب انهيار دالة 'tt' في astronomy-engine
             const targetDate = new Date(Date.UTC(y, m - 1, d, hr, min, 0, 0));
 
             if (isNaN(targetDate.getTime())) {
@@ -193,9 +186,7 @@
             const planetsList = document.getElementById('planetsList');
             planetsList.innerHTML = '';
 
-            // 4. الحساب الفلكي الآمن
             PLANETS.forEach(p => {
-                // نمرر targetDate المضمون
                 const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, observer, true, true);
                 const ecl = Astronomy.Ecliptic(eq);
                 const sign = getSignInfo(ecl.elon);
@@ -213,7 +204,6 @@
                 planetsList.appendChild(card);
             });
 
-            // حساب تقريبي للطالع
             const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, observer, true, true);
             const sunEcl = Astronomy.Ecliptic(sunEq);
             const ascIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(hr / 2)) % 12;
@@ -230,7 +220,6 @@
             `;
             planetsList.appendChild(ascCard);
 
-            // 5. النجاح
             document.getElementById('resultTitle').textContent = `✨ خارطة ${document.getElementById('name').value.trim() || 'مستخدم'}`;
             document.getElementById('resultDate').textContent = `📅 ${rawDate} | ⏰ ${rawTime} | 🌍 ${cityName}`;
             resultDiv.style.display = 'block';
