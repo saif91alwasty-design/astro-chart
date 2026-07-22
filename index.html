@@ -32,13 +32,11 @@
         button:hover { transform: translateY(-2px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        /* كاشف الأخطاء الفائق */
         .debug-box {
-            background: #0a0a0a; border: 2px solid #ff0000; border-radius: 10px;
+            background: #0a0a0a; border: 2px solid #00ff00; border-radius: 10px;
             padding: 15px; margin-top: 20px; font-family: 'Courier New', monospace; 
             font-size: 0.7em; color: #00ff00; direction: ltr; text-align: left;
-            display: none; white-space: pre-wrap; max-height: 400px; overflow-y: auto;
-            line-height: 1.4;
+            display: none; white-space: pre-wrap; max-height: 300px; overflow-y: auto;
         }
         .error-box {
             background: rgba(255,0,0,0.2); border: 1px solid #ff4444; color: #ff8888;
@@ -113,7 +111,6 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
         const cityVal = document.getElementById('city').value;
-        log += `   Name: ${name}, Date: ${dateVal}, Time: ${timeVal}, City: ${cityVal}\n`;
         
         log += "2. Parsing numbers...\n";
         const cityData = cityVal.split(',');
@@ -125,17 +122,11 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         const lat = parseFloat(cityData[0]);
         const lng = parseFloat(cityData[1]);
         const cityName = cityData[2];
-        log += `   Parsed: Y=${y}, M=${m}, D=${d}, HR=${hr}, MIN=${min}, LAT=${lat}, LNG=${lng}\n`;
         
         log += "3. Creating Date object...\n";
         const targetDate = new Date(Date.UTC(y, m - 1, d, hr, min, 0, 0));
-        log += `   Date created: ${targetDate.toISOString()}\n`;
         
-        log += "4. Creating Observer...\n";
-        const observer = new Astronomy.Observer(lat, lng, 0);
-        log += `   Observer created successfully.\n`;
-        
-        log += "5. Starting planet calculations...\n";
+        log += "4. Starting planet calculations (Geocentric)...\n";
         let html = `<h2 style="color:#ffd700; text-align:center; margin-bottom:20px;">✨ خارطة ${name}</h2>`;
         html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;">📅 ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}</p>`;
 
@@ -154,19 +145,21 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
             const p = PLANETS[i];
             log += `   [${i+1}/7] Processing ${p.key}...\n`;
             
-            log += `      - Calling Astronomy.Equator...\n`;
-            const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, observer, true, true);
-            log += `      - Equator success. Has .t? ${!!eq.t}. Has .vec.t? ${!!(eq.vec && eq.vec.t)}\n`;
+            // 🛠️ الحل الجذري: استخدام null بدلاً من observer لحساب إحداثيات مركزية أرضية (Geocentric)
+            // هذا يتجاوز الخلل في المكتبة عند التحويل من Topocentric إلى Ecliptic
+            log += `      - Calling Astronomy.Equator (Geocentric)...\n`;
+            const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, null, true, true);
             
-            // الرقعة السحرية
+            log += `      - Equator success. ra=${eq.ra}, dec=${eq.dec}, dist=${eq.dist}\n`;
+            
+            // الرقعة الاحتياطية
             if (!eq.t && eq.vec && eq.vec.t) {
                 eq.t = eq.vec.t;
-                log += `      - Patched eq.t from eq.vec.t\n`;
             }
             
             log += `      - Calling Astronomy.Ecliptic...\n`;
             const ecl = Astronomy.Ecliptic(eq);
-            log += `      - Ecliptic success. elon = ${ecl.elon}\n`;
+            log += `      - Ecliptic success. elon=${ecl.elon}\n`;
             
             let lon = ecl.elon % 360;
             if (lon < 0) lon += 360;
@@ -186,8 +179,8 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
             log += `      - ${p.key} completed successfully.\n`;
         }
         
-        log += "6. Calculating Ascendant...\n";
-        const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, observer, true, true);
+        log += "5. Calculating Ascendant...\n";
+        const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, null, true, true);
         if (!sunEq.t && sunEq.vec && sunEq.vec.t) sunEq.t = sunEq.vec.t;
         const sunEcl = Astronomy.Ecliptic(sunEq);
         const ascIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(hr / 2)) % 12;
@@ -202,9 +195,9 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
                 </div>
             </div>
         `;
-        log += "7. Ascendant calculation completed.\n";
+        log += "6. Ascendant calculation completed.\n";
 
-        log += "8. Rendering HTML to DOM...\n";
+        log += "7. Rendering HTML to DOM...\n";
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';
         log += "=== SUCCESS: ALL STEPS COMPLETED ===\n";
@@ -216,7 +209,6 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         if (err && typeof err === 'object') {
             log += `Error Message: ${err.message}\n`;
             log += `Error Stack: ${err.stack}\n`;
-            log += `Error Keys: ${Object.keys(err).join(', ')}\n`;
         }
         
         const errMsg = (typeof err === 'object' && err !== null && err.message) ? err.message : String(err);
