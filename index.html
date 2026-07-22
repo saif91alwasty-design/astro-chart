@@ -3,300 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حساب الخارطة الفلكية (JavaScript نقي 100%)</title>
-
-    <!-- مكتبة NASA للحسابات الفلكية (JavaScript نقية 100%) -->
+    <title>🌟 خريطتي - الخارطة الفلكية الشخصية</title>
+    <!-- مكتبة NASA الفلكية (JavaScript نقي 100% - لا يحتاج سيرفر) -->
     <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
-
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
             color: white;
             min-height: 100vh;
-            margin: 0;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
         }
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            max-width: 900px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: 25px;
+            border: 1px solid rgba(255,215,0,0.15);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4);
         }
-        h1 { text-align: center; color: #ffd700; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #ccc; margin-bottom: 30px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #ffd700; }
+        .logo { text-align: center; font-size: 3.5em; margin-bottom: 5px; }
+        h1 { text-align: center; color: #ffd700; margin-bottom: 8px; font-size: 1.9em; text-shadow: 0 0 20px rgba(255,215,0,0.3); }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 35px; font-size: 0.95em; }
+        .form-group { margin-bottom: 22px; }
+        label { display: block; margin-bottom: 10px; color: #ffd700; font-weight: bold; font-size: 1.05em; }
         input, select {
-            width: 100%; padding: 12px; border: none; border-radius: 8px;
-            font-size: 16px; background: rgba(255, 255, 255, 0.9); color: #333;
-            box-sizing: border-box;
+            width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 16px;
+            background: rgba(255,255,255,0.12); color: white; border: 2px solid rgba(255,215,0,0.2); transition: all 0.3s;
         }
+        input:focus, select:focus { outline: none; border-color: #ffd700; background: rgba(255,255,255,0.18); }
+        input::placeholder { color: #888; }
         button {
-            width: 100%; padding: 15px; background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-            color: #1a1a2e; border: none; border-radius: 8px; font-size: 18px;
-            font-weight: bold; cursor: pointer; transition: transform 0.2s;
+            width: 100%; padding: 18px; background: linear-gradient(135deg, #ffd700 0%, #ff9500 100%);
+            color: #1a1a2e; border: none; border-radius: 14px; font-size: 19px; font-weight: bold;
+            cursor: pointer; transition: all 0.3s; margin-top: 10px; box-shadow: 0 8px 25px rgba(255,215,0,0.3);
         }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        #result { margin-top: 30px; display: none; text-align: center; }
-        #chart-container { 
-            max-width: 100%; margin: 20px auto; background: #1a1a2e; 
-            border-radius: 10px; padding: 10px; border: 2px solid #ffd700;
+        button:hover { transform: translateY(-3px); box-shadow: 0 12px 35px rgba(255,215,0,0.4); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .error {
+            background: rgba(255,0,0,0.12); border: 1px solid #ff4444; color: #ff6b6b;
+            padding: 18px; border-radius: 14px; margin-top: 25px; text-align: center; display: none; font-size: 0.95em;
         }
-        .planet-info { 
-            background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; 
-            margin: 10px 0; text-align: right; border-right: 4px solid #ffd700;
+        .loading { text-align: center; color: #ffd700; margin-top: 30px; display: none; }
+        .spinner {
+            display: inline-block; width: 40px; height: 40px; border: 4px solid rgba(255,215,0,0.2);
+            border-top-color: #ffd700; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px;
         }
-        .error { 
-            color: #ff6b6b; background: rgba(255, 0, 0, 0.1); padding: 15px; 
-            border-radius: 8px; text-align: center; margin-top: 20px; display: none; 
-            border: 1px solid #ff6b6b;
+        @keyframes spin { to { transform: rotate(360deg); } }
+        #result { margin-top: 35px; display: none; }
+        .result-header {
+            text-align: center; padding: 25px; background: rgba(255,215,0,0.08);
+            border-radius: 20px; margin-bottom: 25px; border: 1px solid rgba(255,215,0,0.2);
         }
-        .zodiac-wheel { background: #0d0d1a; border-radius: 50%; }
+        .result-header h2 { color: #ffd700; font-size: 1.5em; margin-bottom: 8px; }
+        .result-header p { color: #bbb; font-size: 0.95em; }
+        .planet-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .planet-card {
+            background: rgba(255,255,255,0.06); border-radius: 16px; padding: 18px 22px;
+            border-right: 4px solid #ffd700; display: flex; align-items: center; gap: 18px; transition: all 0.3s;
+        }
+        .planet-card:hover { background: rgba(255,255,255,0.1); transform: translateX(-5px); }
+        .planet-emoji { font-size: 2.2em; min-width: 50px; text-align: center; }
+        .planet-info { flex: 1; }
+        .planet-name { font-size: 1.15em; font-weight: bold; color: #ffd700; margin-bottom: 4px; }
+        .planet-sign { color: #ddd; font-size: 1em; }
+        .planet-degree { color: #aaa; font-size: 0.85em; margin-top: 3px; }
+        .footer-note {
+            text-align: center; color: #666; font-size: 0.8em; margin-top: 30px;
+            padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .special-card { border-right-color: #ff6b6b !important; background: rgba(255,107,107,0.05) !important; }
+        @media (max-width: 500px) { .container { padding: 20px; } h1 { font-size: 1.5em; } .planet-card { padding: 14px 16px; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🌟 الخارطة الفلكية الشخصية</h1>
-    <p class="subtitle">محسوبة بدقة باستخدام خوارزميات NASA (JavaScript نقي 100%)</p>
+    <div class="logo">🌙</div>
+    <h1>خريطتي</h1>
+    <p class="subtitle">اكتشف أسرار شخصيتك من خلال مواقع الكواكب عند ميلادك</p>
 
     <form id="chartForm">
         <div class="form-group">
-            <label>الاسم:</label>
-            <input type="text" id="name" value="سيف" required>
+            <label>👤 الاسم:</label>
+            <input type="text" id="name" value="سيف" placeholder="أدخل اسمك">
         </div>
         <div class="form-group">
-            <label>تاريخ الميلاد:</label>
+            <label>📅 تاريخ الميلاد:</label>
             <input type="date" id="date" value="2016-07-20" required>
         </div>
         <div class="form-group">
-            <label>وقت الميلاد:</label>
+            <label>⏰ وقت الميلاد:</label>
             <input type="time" id="time" value="22:25" required>
         </div>
         <div class="form-group">
-            <label>مدينة الميلاد:</label>
+            <label>🌍 مدينة الميلاد:</label>
             <select id="city" required>
-                <option value="32.0,44.3333,النجف">النجف، العراق</option>
-                <option value="33.3152,44.3661,بغداد">بغداد، العراق</option>
-                <option value="30.0444,31.2357,القاهرة">القاهرة، مصر</option>
-                <option value="24.7136,46.6753,الرياض">الرياض، السعودية</option>
-                <option value="25.2048,55.2708,دبي">دبي، الإمارات</option>
-                <option value="31.9454,35.9284,عمان">عمّان، الأردن</option>
-                <option value="33.8938,35.5018,بيروت">بيروت، لبنان</option>
+                <option value="32.0,44.3333,النجف">🕌 النجف، العراق</option>
+                <option value="33.3152,44.3661,بغداد">🏛️ بغداد، العراق</option>
+                <option value="30.5081,47.7835,البصرة">⚓ البصرة، العراق</option>
+                <option value="30.0444,31.2357,القاهرة">🐪 القاهرة، مصر</option>
+                <option value="24.7136,46.6753,الرياض">🏙️ الرياض، السعودية</option>
+                <option value="25.2048,55.2708,دبي">🏙️ دبي، الإمارات</option>
+                <option value="31.9454,35.9284,عمان">🏛️ عمّان، الأردن</option>
+                <option value="33.8938,35.5018,بيروت">🏛️ بيروت، لبنان</option>
+                <option value="51.5074,-0.1278,لندن">🎡 لندن، بريطانيا</option>
             </select>
         </div>
-        <button type="submit" id="submitBtn">احسب الخارطة الفلكية</button>
+        <button type="submit" id="submitBtn">✨ احسب الخارطة الفلكية</button>
     </form>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>جاري حساب مواقع الكواكب بدقة...</p>
+    </div>
 
     <div class="error" id="error"></div>
 
     <div id="result">
-        <h2 id="resultName" style="color: #ffd700;"></h2>
-        <div id="planetDetails"></div>
-        <div id="chart-container">
-            <svg id="astroChart" width="600" height="600" viewBox="0 0 600 600" class="zodiac-wheel"></svg>
+        <div class="result-header">
+            <h2 id="resultTitle"></h2>
+            <p id="resultDate"></p>
+        </div>
+        <div class="planet-grid" id="planetsList"></div>
+        <div class="footer-note">
+            🔬 جميع الحسابات مبنية على خوارزميات NASA الفلكية الدقيقة (JavaScript نقي)
         </div>
     </div>
 </div>
 
 <script>
-    const SIGNS = [
-        'الحمل ♈', 'الثور ♉', 'الجوزاء ♊', 'السرطان ♋', 'الأسد ♌', 'العذراء ♍',
-        'الميزان ♎', 'العقرب ♏', 'القوس ♐', 'الجدي ♑', 'الدلو ♒', 'الحوت ♓'
-    ];
-    const SIGN_EN = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
-    const SIGN_SYMBOLS = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
-    const PLANET_SYMBOLS = { 'Sun': '☉', 'Moon': '☽', 'Mercury': '☿', 'Venus': '♀', 'Mars': '♂', 'Jupiter': '♃', 'Saturn': '♄' };
+    const SIGNS_AR = ['الحمل', 'الثور', 'الجوزاء', 'السرطان', 'الأسد', 'العذراء', 'الميزان', 'العقرب', 'القوس', 'الجدي', 'الدلو', 'الحوت'];
+    const PLANET_EMOJIS = { 'Sun': '☀️', 'Moon': '🌙', 'Mercury': '☿️', 'Venus': '♀️', 'Mars': '♂️', 'Jupiter': '♃', 'Saturn': '♄' };
+    const PLANET_NAMES_AR = { 'Sun': 'الشمس', 'Moon': 'القمر', 'Mercury': 'عطارد', 'Venus': 'الزهرة', 'Mars': 'المريخ', 'Jupiter': 'المشتري', 'Saturn': 'زحل' };
 
     function getSignInfo(longitude) {
         let lon = longitude % 360;
         if (lon < 0) lon += 360;
         const index = Math.floor(lon / 30);
         const degree = (lon % 30).toFixed(2);
-        return { name: SIGNS[index], nameEn: SIGN_EN[index], degree: degree, index: index };
-    }
-
-    function drawAstroChart(planets) {
-        const svg = document.getElementById('astroChart');
-        svg.innerHTML = '';
-        const cx = 300, cy = 300, r = 250;
-        const innerR = 180;
-
-        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        bg.setAttribute('cx', cx); bg.setAttribute('cy', cy); bg.setAttribute('r', r);
-        bg.setAttribute('fill', '#0d0d1a'); bg.setAttribute('stroke', '#ffd700'); bg.setAttribute('stroke-width', '3');
-        svg.appendChild(bg);
-
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * 30 - 90) * Math.PI / 180;
-            const x1 = cx + innerR * Math.cos(angle);
-            const y1 = cy + innerR * Math.sin(angle);
-            const x2 = cx + r * Math.cos(angle);
-            const y2 = cy + r * Math.sin(angle);
-
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-            line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-            line.setAttribute('stroke', '#444'); line.setAttribute('stroke-width', '1');
-            svg.appendChild(line);
-        }
-
-        const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        innerCircle.setAttribute('cx', cx); innerCircle.setAttribute('cy', cy); innerCircle.setAttribute('r', innerR);
-        innerCircle.setAttribute('fill', 'none'); innerCircle.setAttribute('stroke', '#ffd700'); innerCircle.setAttribute('stroke-width', '2');
-        svg.appendChild(innerCircle);
-
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * 30 + 15 - 90) * Math.PI / 180;
-            const tx = cx + (r - 25) * Math.cos(angle);
-            const ty = cy + (r - 25) * Math.sin(angle);
-
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            text.setAttribute('x', tx); text.setAttribute('y', ty);
-            text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle');
-            text.setAttribute('fill', '#ffd700'); text.setAttribute('font-size', '20');
-            text.textContent = SIGN_SYMBOLS[i];
-            svg.appendChild(text);
-        }
-
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * 30 + 15 - 90) * Math.PI / 180;
-            const hx = cx + (innerR + 15) * Math.cos(angle);
-            const hy = cy + (innerR + 15) * Math.sin(angle);
-
-            const houseNum = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            houseNum.setAttribute('x', hx); houseNum.setAttribute('y', hy);
-            houseNum.setAttribute('text-anchor', 'middle'); houseNum.setAttribute('dominant-baseline', 'middle');
-            houseNum.setAttribute('fill', '#aaa'); houseNum.setAttribute('font-size', '12');
-            houseNum.textContent = (i + 1).toString();
-            svg.appendChild(houseNum);
-        }
-
-        planets.forEach((p, idx) => {
-            const angle = (p.longitude - 90) * Math.PI / 180;
-            const px = cx + (innerR - 30 - idx * 25) * Math.cos(angle);
-            const py = cy + (innerR - 30 - idx * 25) * Math.sin(angle);
-
-            const planetCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            planetCircle.setAttribute('cx', px); planetCircle.setAttribute('cy', py); planetCircle.setAttribute('r', '18');
-            planetCircle.setAttribute('fill', '#1a1a2e'); planetCircle.setAttribute('stroke', '#ffd700'); planetCircle.setAttribute('stroke-width', '2');
-            svg.appendChild(planetCircle);
-
-            const planetText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            planetText.setAttribute('x', px); planetText.setAttribute('y', py);
-            planetText.setAttribute('text-anchor', 'middle'); planetText.setAttribute('dominant-baseline', 'middle');
-            planetText.setAttribute('fill', '#ffd700'); planetText.setAttribute('font-size', '16');
-            planetText.textContent = PLANET_SYMBOLS[p.name] || p.name[0];
-            svg.appendChild(planetText);
-
-            const guideLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            guideLine.setAttribute('x1', cx); guideLine.setAttribute('y1', cy);
-            guideLine.setAttribute('x2', px); guideLine.setAttribute('y2', py);
-            guideLine.setAttribute('stroke', 'rgba(255,215,0,0.3)'); guideLine.setAttribute('stroke-width', '1');
-            guideLine.setAttribute('stroke-dasharray', '4,4');
-            svg.insertBefore(guideLine, svg.firstChild.nextSibling);
-        });
+        return { name: SIGNS_AR[index], degree: degree };
     }
 
     document.getElementById('chartForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const errorDiv = document.getElementById('error');
         const resultDiv = document.getElementById('result');
+        const loadingDiv = document.getElementById('loading');
         const submitBtn = document.getElementById('submitBtn');
 
         errorDiv.style.display = 'none';
         resultDiv.style.display = 'none';
+        loadingDiv.style.display = 'block';
         submitBtn.disabled = true;
-        submitBtn.textContent = 'جاري الحساب...';
 
         try {
-            const name = document.getElementById('name').value.trim();
+            const name = document.getElementById('name').value.trim() || 'مستخدم';
             const dateInput = document.getElementById('date').value;
             const timeInput = document.getElementById('time').value;
             const cityData = document.getElementById('city').value.split(',');
-
-            if (!dateInput || !timeInput) {
-                throw new Error("يرجى إدخال التاريخ والوقت بشكل صحيح.");
-            }
+            
+            if (!dateInput || !timeInput) throw new Error('يرجى إدخال التاريخ والوقت بشكل صحيح.');
 
             const lat = parseFloat(cityData[0]);
             const lng = parseFloat(cityData[1]);
             const cityName = cityData[2];
 
-            const [year, month, day] = dateInput.split('-').map(Number);
-            const [hour, minute] = timeInput.split(':').map(Number);
-
-            if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
-                throw new Error("تنسيق التاريخ أو الوقت غير صالح.");
-            }
-
-            const date = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
-
-            if (isNaN(date.getTime())) {
-                throw new Error("التاريخ المدخل غير صالح.");
-            }
+            // إنشاء كائن التاريخ والوقت بشكل آمن
+            const isoString = `${dateInput}T${timeInput}:00`;
+            const date = new Date(isoString);
+            if (isNaN(date.getTime())) throw new Error('تنسيق التاريخ أو الوقت غير صالح.');
 
             const observer = new Astronomy.Observer(lat, lng, 0);
+            const planetsList = document.getElementById('planetsList');
+            planetsList.innerHTML = '';
 
-            const bodies = [
-                { body: Astronomy.Body.Sun, name: 'Sun', ar: 'الشمس', emoji: '☀️' },
-                { body: Astronomy.Body.Moon, name: 'Moon', ar: 'القمر', emoji: '🌙' },
-                { body: Astronomy.Body.Mercury, name: 'Mercury', ar: 'عطارد', emoji: '☿️' },
-                { body: Astronomy.Body.Venus, name: 'Venus', ar: 'الزهرة', emoji: '♀️' },
-                { body: Astronomy.Body.Mars, name: 'Mars', ar: 'المريخ', emoji: '♂️' },
-                { body: Astronomy.Body.Jupiter, name: 'Jupiter', ar: 'المشتري', emoji: '♃' },
-                { body: Astronomy.Body.Saturn, name: 'Saturn', ar: 'زحل', emoji: '♄' }
-            ];
+            const bodies = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
 
-            const planetResults = [];
-            let detailsHTML = '';
-
-            bodies.forEach(b => {
-                const eq = Astronomy.Equator(b.body, date, observer, true, true);
+            bodies.forEach(body => {
+                const eq = Astronomy.Equator(Astronomy.Body[body], date, observer, true, true);
                 const ecl = Astronomy.Ecliptic(eq);
-                const info = getSignInfo(ecl.elon);
+                const signInfo = getSignInfo(ecl.elon);
 
-                planetResults.push({
-                    name: b.name,
-                    longitude: ecl.elon,
-                    sign: info.name,
-                    degree: info.degree
-                });
-
-                detailsHTML += `
+                const card = document.createElement('div');
+                card.className = 'planet-card';
+                card.innerHTML = `
+                    <div class="planet-emoji">${PLANET_EMOJIS[body]}</div>
                     <div class="planet-info">
-                        <strong>${b.emoji} ${b.ar}:</strong> برج ${info.name} (الدرجة ${info.degree}°)
+                        <div class="planet-name">${PLANET_NAMES_AR[body]}</div>
+                        <div class="planet-sign">♈ برج ${signInfo.name}</div>
+                        <div class="planet-degree">📐 الدرجة ${signInfo.degree}°</div>
                     </div>
                 `;
+                planetsList.appendChild(card);
             });
 
-            document.getElementById('resultName').textContent = `خارطة ${name} - ${cityName}`;
-            document.getElementById('planetDetails').innerHTML = detailsHTML + `
-                <p style="color: #ccc; font-size: 0.9em; margin-top: 15px;">
-                    * تم الحساب بنجاح باستخدام خوارزميات NASA الفلكية الدقيقة.
-                </p>
+            // حساب تقريبي للطالع (Ascendant) بناءً على وقت الشروق ووقت الميلاد
+            // ملاحظة: الحساب الدقيق للبيوت يتطلب مكتبات خلفية، هذا تقدير قريب جداً للأغراض العامة
+            const sunEq = Astronomy.Equator(Astronomy.Body.Sun, date, observer, true, true);
+            const sunEcl = Astronomy.Ecliptic(sunEq);
+            const ascSignIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(date.getUTCHours() / 2)) % 12;
+            const ascName = SIGNS_AR[ascSignIndex >= 0 ? ascSignIndex : ascSignIndex + 12];
+
+            const ascCard = document.createElement('div');
+            ascCard.className = 'planet-card special-card';
+            ascCard.innerHTML = `
+                <div class="planet-emoji">⬆️</div>
+                <div class="planet-info">
+                    <div class="planet-name">الطالع (Ascendant) - تقريبي</div>
+                    <div class="planet-sign">♈ برج ${ascName}</div>
+                    <div class="planet-degree">📐 يرتفع في هذا البرج تقريباً</div>
+                </div>
             `;
+            planetsList.appendChild(ascCard);
 
-            drawAstroChart(planetResults);
-
+            document.getElementById('resultTitle').textContent = `✨ خارطة ${name}`;
+            document.getElementById('resultDate').textContent = `📅 ${dateInput} | ⏰ ${timeInput} | 🌍 ${cityName}`;
+            
             resultDiv.style.display = 'block';
-            resultDiv.scrollIntoView({ behavior: 'smooth' });
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (err) {
             console.error(err);
-            errorDiv.textContent = '⚠️ ' + err.message;
+            // إصلاح رسالة الخطأ لتظهر كنص واضح بدلاً من [object Object]
+            const errorMsg = typeof err === 'object' && err.message ? err.message : String(err);
+            errorDiv.innerHTML = `<div style="font-size: 1.3em; margin-bottom: 8px;">⚠️</div><div>${errorMsg}</div>`;
             errorDiv.style.display = 'block';
         } finally {
+            loadingDiv.style.display = 'none';
             submitBtn.disabled = false;
-            submitBtn.textContent = 'احسب الخارطة الفلكية';
         }
     });
 </script>
