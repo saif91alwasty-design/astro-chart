@@ -35,14 +35,15 @@
         button:hover { transform: translateY(-3px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        /* كاشف الأخطاء المتقدم */
-        .debug-panel {
-            background: rgba(0,0,0,0.4); border: 1px solid #ff4444; border-radius: 14px;
-            padding: 15px; margin-top: 20px; font-family: monospace; font-size: 0.85em;
-            color: #ff6b6b; direction: ltr; text-align: left; display: none;
+        /* كاشف الأخطاء التشخيصي المتقدم */
+        .debug-box {
+            background: #1a0505; border: 1px solid #ff4444; border-radius: 10px;
+            padding: 15px; margin-top: 20px; font-family: 'Courier New', monospace; 
+            font-size: 0.8em; color: #ff6b6b; direction: ltr; text-align: left; display: none;
+            white-space: pre-wrap; word-break: break-all;
         }
         .error-box {
-            background: rgba(255,0,0,0.12); border: 1px solid #ff4444; color: #ff6b6b;
+            background: rgba(255,0,0,0.15); border: 1px solid #ff4444; color: #ff8888;
             padding: 18px; border-radius: 14px; margin-top: 25px; text-align: center; display: none;
         }
         .loading { text-align: center; color: #ffd700; margin-top: 30px; display: none; }
@@ -65,8 +66,7 @@
         .planet-sign { color: #ddd; font-size: 1em; }
         .planet-degree { color: #aaa; font-size: 0.85em; margin-top: 3px; }
         .special-card { border-right-color: #ff6b6b !important; background: rgba(255,107,107,0.05) !important; }
-    </style>
-</head>
+    </style</head>
 <body>
 
 <div class="container">
@@ -85,6 +85,7 @@
         </div>
         <div class="form-group">
             <label>⏰ وقت الميلاد:</label>
+            <!-- type="time" يضمن تنسيق 24 ساعة نظيف -->
             <input type="time" id="time" value="22:25" required>
         </div>
         <div class="form-group">
@@ -95,8 +96,6 @@
                 <option value="30.0444,31.2357,القاهرة">🐪 القاهرة، مصر</option>
                 <option value="24.7136,46.6753,الرياض">🏙️ الرياض، السعودية</option>
                 <option value="25.2048,55.2708,دبي">🏙️ دبي، الإمارات</option>
-                <option value="31.9454,35.9284,عمان">🏛️ عمّان، الأردن</option>
-                <option value="33.8938,35.5018,بيروت">🏛️ بيروت، لبنان</option>
             </select>
         </div>
         <button type="submit" id="submitBtn">✨ احسب الخارطة الفلكية</button>
@@ -108,7 +107,7 @@
     </div>
 
     <div class="error-box" id="errorBox"></div>
-    <div class="debug-panel" id="debugPanel"></div>
+    <div class="debug-box" id="debugBox"></div>
 
     <div id="result">
         <div class="result-header">
@@ -144,32 +143,28 @@
         e.preventDefault();
         
         const errorBox = document.getElementById('errorBox');
-        const debugPanel = document.getElementById('debugPanel');
+        const debugBox = document.getElementById('debugBox');
         const resultDiv = document.getElementById('result');
         const loadingDiv = document.getElementById('loading');
         const submitBtn = document.getElementById('submitBtn');
 
         errorBox.style.display = 'none';
-        debugPanel.style.display = 'none';
+        debugBox.style.display = 'none';
         resultDiv.style.display = 'none';
         loadingDiv.style.display = 'block';
         submitBtn.disabled = true;
 
         try {
-            // 1. جمع البيانات
-            const name = document.getElementById('name').value.trim() || 'مستخدم';
-            const dateVal = document.getElementById('date').value;
-            const timeVal = document.getElementById('time').value;
+            // 1. التعقيم القسري للمدخلات (لقتل أي أحرف خفية أو تنسيقات عربية تفسد المكتبة)
+            const rawDate = document.getElementById('date').value;
+            const rawTime = document.getElementById('time').value;
             const cityData = document.getElementById('city').value.split(',');
 
-            // 2. كاشف الأخطاء المتقدم: التحقق الصارم من المدخلات
-            if (!dateVal || !timeVal) {
-                throw new Error("حقل التاريخ أو الوقت فارغ.");
-            }
+            // إزالة أي شيء ليس رقماً أو نقطتين من الوقت
+            const cleanTime = rawTime.replace(/[^0-9:]/g, ''); 
+            const [yStr, mStr, dStr] = rawDate.split('-');
+            const [hrStr, minStr] = cleanTime.split(':');
 
-            const [yStr, mStr, dStr] = dateVal.split('-');
-            const [hrStr, minStr] = timeVal.split(':');
-            
             const y = parseInt(yStr, 10);
             const m = parseInt(mStr, 10);
             const d = parseInt(dStr, 10);
@@ -179,27 +174,29 @@
             const lng = parseFloat(cityData[1]);
             const cityName = cityData[2];
 
-            // التحقق من أن كل شيء هو رقم صحيح
+            // 2. كاشف الأخطاء التشخيصي: إذا كان أي قيمة NaN، نوقف التنفيذ ونعرض السبب
             if ([y, m, d, hr, min, lat, lng].some(isNaN)) {
-                debugPanel.innerHTML = `DEBUG VALUES:<br>y:${y} m:${m} d:${d} hr:${hr} min:${min}<br>lat:${lat} lng:${lng}`;
-                debugPanel.style.display = 'block';
-                throw new Error("تنسيق التاريخ أو الوقت غير قياسي. يرجى إعادة إدخاله.");
+                debugBox.innerHTML = `DIAGNOSTIC FAILURE:\nRaw Date: "${rawDate}"\nRaw Time: "${rawTime}"\nParsed -> Y:${y} M:${m} D:${d} HR:${hr} MIN:${min}\nLat:${lat} Lng:${lng}`;
+                debugBox.style.display = 'block';
+                throw new Error("فشل في قراءة التاريخ أو الوقت. يرجى التأكد من إدخالهما بتنسيق قياسي.");
             }
 
-            // 3. إنشاء التاريخ بطريقة آمنة 100% (تتجنب أخطاء المتصفح مع المناطق الزمنية)
-            const safeDate = new Date(y, m - 1, d, hr, min, 0, 0);
-            
-            if (isNaN(safeDate.getTime())) {
-                throw new Error("فشل المتصفح في فهم التاريخ المدخل.");
+            // 3. الحل السحري: استخدام Date.UTC يمنع المتصفح من تطبيق إزاحة المنطقة الزمنية المحلية 
+            // التي تسبب انهيار دالة 'tt' في astronomy-engine
+            const targetDate = new Date(Date.UTC(y, m - 1, d, hr, min, 0, 0));
+
+            if (isNaN(targetDate.getTime())) {
+                throw new Error("كائن التاريخ غير صالح داخلياً.");
             }
 
             const observer = new Astronomy.Observer(lat, lng, 0);
             const planetsList = document.getElementById('planetsList');
             planetsList.innerHTML = '';
 
-            // 4. الحساب الفلكي
+            // 4. الحساب الفلكي الآمن
             PLANETS.forEach(p => {
-                const eq = Astronomy.Equator(Astronomy.Body[p.key], safeDate, observer, true, true);
+                // نمرر targetDate المضمون
+                const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, observer, true, true);
                 const ecl = Astronomy.Ecliptic(eq);
                 const sign = getSignInfo(ecl.elon);
 
@@ -217,7 +214,7 @@
             });
 
             // حساب تقريبي للطالع
-            const sunEq = Astronomy.Equator(Astronomy.Body.Sun, safeDate, observer, true, true);
+            const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, observer, true, true);
             const sunEcl = Astronomy.Ecliptic(sunEq);
             const ascIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(hr / 2)) % 12;
             const ascName = SIGNS_AR[ascIndex >= 0 ? ascIndex : ascIndex + 12];
@@ -233,16 +230,16 @@
             `;
             planetsList.appendChild(ascCard);
 
-            // 5. عرض النتائج
-            document.getElementById('resultTitle').textContent = `✨ خارطة ${name}`;
-            document.getElementById('resultDate').textContent = `📅 ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}`;
+            // 5. النجاح
+            document.getElementById('resultTitle').textContent = `✨ خارطة ${document.getElementById('name').value.trim() || 'مستخدم'}`;
+            document.getElementById('resultDate').textContent = `📅 ${rawDate} | ⏰ ${rawTime} | 🌍 ${cityName}`;
             resultDiv.style.display = 'block';
             resultDiv.scrollIntoView({ behavior: 'smooth' });
 
         } catch (err) {
-            console.error("Astrology Error:", err);
+            console.error("FATAL ASTRO ERROR:", err);
             const msg = err.message || String(err);
-            errorBox.innerHTML = `<div style="font-size:1.2em; margin-bottom:8px;">⚠️ تعذر الحساب</div><div>${msg}</div>`;
+            errorBox.innerHTML = `<div style="font-size:1.2em; margin-bottom:8px;">⚠️ تعذر الحساب</div><div>${msg}</div><div style="font-size:0.8em; margin-top:10px; opacity:0.7;">انظر للمربع الأسود بالأسفل للتشخيص الدقيق</div>`;
             errorBox.style.display = 'block';
         } finally {
             loadingDiv.style.display = 'none';
