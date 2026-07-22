@@ -32,12 +32,6 @@
         button:hover { transform: translateY(-2px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        .debug-box {
-            background: #0a0a0a; border: 2px solid #00ff00; border-radius: 10px;
-            padding: 15px; margin-top: 20px; font-family: 'Courier New', monospace; 
-            font-size: 0.7em; color: #00ff00; direction: ltr; text-align: left;
-            display: none; white-space: pre-wrap; max-height: 300px; overflow-y: auto;
-        }
         .error-box {
             background: rgba(255,0,0,0.2); border: 1px solid #ff4444; color: #ff8888;
             padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; display: none;
@@ -50,6 +44,7 @@
         .planet-emoji { font-size: 2em; }
         .planet-name { font-weight: bold; color: #ffd700; font-size: 1.1em; }
         .planet-info { color: #ddd; }
+        .special-card { border-right-color: #ff6b6b !important; background: rgba(255,107,107,0.1) !important; }
     </style>
 </head>
 <body>
@@ -85,7 +80,6 @@
     </form>
 
     <div class="error-box" id="errorBox"></div>
-    <div class="debug-box" id="debugBox"></div>
     <div id="result"></div>
 </div>
 
@@ -94,39 +88,29 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const errorBox = document.getElementById('errorBox');
-    const debugBox = document.getElementById('debugBox');
     const resultDiv = document.getElementById('result');
     const submitBtn = document.getElementById('submitBtn');
     
     errorBox.style.display = 'none';
-    debugBox.style.display = 'none';
     resultDiv.style.display = 'none';
     submitBtn.disabled = true;
     
-    let log = "=== START DEBUG LOG ===\n";
-    
     try {
-        log += "1. Reading form values...\n";
         const name = document.getElementById('name').value || 'مستخدم';
         const dateVal = document.getElementById('date').value;
         const timeVal = document.getElementById('time').value;
         const cityVal = document.getElementById('city').value;
         
-        log += "2. Parsing numbers...\n";
         const cityData = cityVal.split(',');
         const y = parseInt(dateVal.split('-')[0], 10);
         const m = parseInt(dateVal.split('-')[1], 10);
         const d = parseInt(dateVal.split('-')[2], 10);
         const hr = parseInt(timeVal.split(':')[0], 10);
         const min = parseInt(timeVal.split(':')[1], 10);
-        const lat = parseFloat(cityData[0]);
-        const lng = parseFloat(cityData[1]);
         const cityName = cityData[2];
-        
-        log += "3. Creating Date object...\n";
+
         const targetDate = new Date(Date.UTC(y, m - 1, d, hr, min, 0, 0));
         
-        log += "4. Starting planet calculations (Geocentric)...\n";
         let html = `<h2 style="color:#ffd700; text-align:center; margin-bottom:20px;">✨ خارطة ${name}</h2>`;
         html += `<p style="text-align:center; color:#aaa; margin-bottom:20px;">📅 ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}</p>`;
 
@@ -141,25 +125,12 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         ];
         const SIGNS_AR = ['الحمل', 'الثور', 'الجوزاء', 'السرطان', 'الأسد', 'العذراء', 'الميزان', 'العقرب', 'القوس', 'الجدي', 'الدلو', 'الحوت'];
 
+        // 🎯 الحل السحري: استخدام EclipticGeo مباشرة (بدون Equator وبدون Observer)
         for (let i = 0; i < PLANETS.length; i++) {
             const p = PLANETS[i];
-            log += `   [${i+1}/7] Processing ${p.key}...\n`;
             
-            // 🛠️ الحل الجذري: استخدام null بدلاً من observer لحساب إحداثيات مركزية أرضية (Geocentric)
-            // هذا يتجاوز الخلل في المكتبة عند التحويل من Topocentric إلى Ecliptic
-            log += `      - Calling Astronomy.Equator (Geocentric)...\n`;
-            const eq = Astronomy.Equator(Astronomy.Body[p.key], targetDate, null, true, true);
-            
-            log += `      - Equator success. ra=${eq.ra}, dec=${eq.dec}, dist=${eq.dist}\n`;
-            
-            // الرقعة الاحتياطية
-            if (!eq.t && eq.vec && eq.vec.t) {
-                eq.t = eq.vec.t;
-            }
-            
-            log += `      - Calling Astronomy.Ecliptic...\n`;
-            const ecl = Astronomy.Ecliptic(eq);
-            log += `      - Ecliptic success. elon=${ecl.elon}\n`;
+            // استخدام EclipticGeo - تحسب الإحداثيات الكسوفية المركزية الأرضية مباشرة
+            const ecl = Astronomy.EclipticGeo(Astronomy.Body[p.key], targetDate);
             
             let lon = ecl.elon % 360;
             if (lon < 0) lon += 360;
@@ -172,22 +143,19 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
                     <div class="planet-emoji">${p.emoji}</div>
                     <div>
                         <div class="planet-name">${p.name}</div>
-                        <div class="planet-info">♈ برج ${signName} | 📐 الدرجة ${degree}°</div>
+                        <div class="planet-info">♈ برج ${signName} |  الدرجة ${degree}°</div>
                     </div>
                 </div>
             `;
-            log += `      - ${p.key} completed successfully.\n`;
         }
         
-        log += "5. Calculating Ascendant...\n";
-        const sunEq = Astronomy.Equator(Astronomy.Body.Sun, targetDate, null, true, true);
-        if (!sunEq.t && sunEq.vec && sunEq.vec.t) sunEq.t = sunEq.vec.t;
-        const sunEcl = Astronomy.Ecliptic(sunEq);
+        // حساب تقريبي للطالع
+        const sunEcl = Astronomy.EclipticGeo(Astronomy.Body.Sun, targetDate);
         const ascIndex = (Math.floor(sunEcl.elon / 30) + Math.floor(hr / 2)) % 12;
         const ascName = SIGNS_AR[ascIndex >= 0 ? ascIndex : ascIndex + 12];
         
         html += `
-            <div class="planet-card" style="border-right-color: #ff6b6b; background: rgba(255,107,107,0.1);">
+            <div class="planet-card special-card">
                 <div class="planet-emoji">⬆️</div>
                 <div>
                     <div class="planet-name">الطالع (Ascendant) - تقريبي</div>
@@ -195,29 +163,15 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
                 </div>
             </div>
         `;
-        log += "6. Ascendant calculation completed.\n";
 
-        log += "7. Rendering HTML to DOM...\n";
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';
-        log += "=== SUCCESS: ALL STEPS COMPLETED ===\n";
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        log += `\n=== CAUGHT EXCEPTION ===\n`;
-        log += `Error Type: ${typeof err}\n`;
-        log += `Error Value: ${String(err)}\n`;
-        if (err && typeof err === 'object') {
-            log += `Error Message: ${err.message}\n`;
-            log += `Error Stack: ${err.stack}\n`;
-        }
-        
         const errMsg = (typeof err === 'object' && err !== null && err.message) ? err.message : String(err);
-        errorBox.innerHTML = `<strong>⚠️ خطأ غير متوقع:</strong><br>${errMsg}`;
+        errorBox.innerHTML = `<strong>⚠️ خطأ:</strong><br>${errMsg}`;
         errorBox.style.display = 'block';
-        
-        debugBox.textContent = log;
-        debugBox.style.display = 'block';
-        debugBox.scrollIntoView({ behavior: 'smooth' });
     } finally {
         submitBtn.disabled = false;
     }
