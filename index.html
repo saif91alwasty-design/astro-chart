@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> خريطتي - الخارطة الفلكية الشخصية الدقيقة</title>
+    <title>خريطتي - الخارطة الفلكية الشخصية الدقيقة</title>
     <meta name="description" content="احسب خارطتك الفلكية الشخصية بدقة معايير ناسا. تفسير عربي احترافي لبرجك وكواكبك.">
+    <!-- مكتبات خارجية ضرورية فقط للحساب وتوليد PDF -->
     <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -66,15 +67,17 @@
         .action-buttons {
             display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;
         }
-        .btn-pdf { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); }
-        .btn-whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
+        .btn-pdf { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); color: white; border: none; padding: 16px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .btn-whatsapp { 
+            background: linear-gradient(135deg, #25D366, #128C7E); color: white; 
+            text-decoration: none; text-align: center; padding: 16px; border-radius: 10px; 
+            font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+        }
         .accuracy-note {
             text-align: center; color: #888; font-size: 0.8em; margin-top: 20px;
             padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);
         }
-        .loading {
-            text-align: center; padding: 30px; display: none;
-        }
+        .loading { text-align: center; padding: 30px; display: none; }
         .spinner {
             border: 4px solid rgba(255,215,0,0.2); border-top-color: #ffd700;
             border-radius: 50%; width: 50px; height: 50px;
@@ -117,18 +120,8 @@
                 <option value="36.1911,44.0093,أربيل">أربيل</option>
                 <option value="35.5556,45.4333,السليمانية">السليمانية</option>
                 <option value="36.3450,43.1309,الموصل">الموصل</option>
-                <option value="36.8667,43.0000,دهوك">دهوك</option>
-                <option value="35.4681,44.3922,كركوك">كركوك</option>
                 <option value="32.6160,44.0241,كربلاء">كربلاء</option>
                 <option value="31.0571,46.2637,الناصرية">الناصرية</option>
-                <option value="31.3167,45.2833,السماوة">السماوة</option>
-                <option value="31.9929,44.9253,الديوانية">الديوانية</option>
-                <option value="32.4640,44.4217,الحلة">الحلة</option>
-                <option value="33.4206,43.3078,الرمادي">الرمادي</option>
-                <option value="33.3500,43.7833,الفلوجة">الفلوجة</option>
-                <option value="34.1956,43.8742,سامراء">سامراء</option>
-                <option value="34.6111,43.6833,تكريت">تكريت</option>
-                <option value="33.7500,44.6333,بعقوبة">بعقوبة</option>
                 <option value="31.8344,47.1447,العمارة">العمارة</option>
             </select>
         </div>
@@ -146,90 +139,74 @@
 
 <script>
 // ═══════════════════════════════════════════════════════════
-// إعدادات Supabase - استبدل القيم بمفاتيحك الخاصة
+// إعدادات الموقع (غيّر رقم الواتساب هنا)
 // ═══════════════════════════════════════════════════════════
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-const WHATSAPP_NUMBER = '9647XXXXXXXXX'; // رقم واتسابك
-
-let supabase = null;
-try {
-    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
-        supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-} catch(e) { console.log('Supabase not configured yet'); }
+const WHATSAPP_NUMBER = '9647XXXXXXXXX'; // ضع رقمك هنا بدون + أو أصفار
 
 // ═══════════════════════════════════════════════════════════
 // قاعدة بيانات التفسيرات النصية
 // ═══════════════════════════════════════════════════════════
-const SIGNS_AR = ['الحمل ', 'الثور ♉', 'الجوزاء ♊', 'السرطان ♋', 'الأسد ♌', 'العذراء ♍', 
+const SIGNS_AR = ['الحمل ♈', 'الثور ♉', 'الجوزاء ♊', 'السرطان ♋', 'الأسد ♌', 'العذراء ♍', 
                   'الميزان ♎', 'العقرب ♏', 'القوس ♐', 'الجدي ♑', 'الدلو ♒', 'الحوت ♓'];
 
-const SIGNS_EN = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 
-                  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
-
-// تفسيرات الشمس في الأبراج
 const SUN_INTERPRETATIONS = {
-    'الحمل ♈': 'تمتلك شخصية قيادية ومبادرة. أنت شخص شجاع، مباشر، ولا يخاف من التحديات. تحب أن تكون الأول في كل شيء، وتمتلك طاقة حماسية عالية. قد تكون اندفاعياً أحياناً، لكن شجاعتك تلهم الآخرين.',
-    'الثور ♉': 'شخصيتك مستقرة، عملية، وتقدر الأمان المادي والعاطفي. أنت صبور جداً، وتحب الجمال والرفاهية. تتمسك بما تؤمن به، وقد تكون عنيداً، لكن هذا العناد هو ما يجعلك تنجز ما تبدأه.',
-    'الجوزاء ♊': 'عقلك سريع، فضولي، ومتعدد الاهتمامات. تحب التواصل، التعلم، وتبادل الأفكار. أنت اجتماعي جداً، وتتقن التعبير عن نفسك بالكلمات. قد تتشتت أحياناً بين اهتمامات كثيرة.',
-    'السرطان ♋': 'قلب كبير وعاطفة عميقة. أنت حساس، caring، وترتبط بعائلتك وجذورك بعمق. تحب رعاية الآخرين، وتمتلك حدساً قوياً. قد تكون مزاجياً أحياناً، لكن هذا يعكس عمق مشاعرك.',
-    'الأسد ♌': 'تمتلك كاريزما طبيعية، ثقة بالنفس، وكبرياءً إيجابياً. تحب أن تُقدر على جهودك، ولديك إرادة قوية وقدرة على إلهام الآخرين. قلبك كبير، وكرمك لا حدود له.',
-    'العذراء ♍': 'دقيق، محلل، ومنظم. تبحث عن الكمال في كل شيء، وتمتلك قدرة خارقة على ملاحظة التفاصيل. أنت مفيد للآخرين، وعقلك العملي يحل المشاكل بذكاء. قد تكون قاسياً في نقدك لذاتك.',
-    'الميزان ♎': 'دبلوماسي، محب للانسجام، وذو ذوق رفيع. تكره الصراخ والمشاكل، وتسعى دائماً للعدالة والتوازن. أنت جذاب اجتماعياً، وتحيط نفسك بالجمال والأشخاص الودودين.',
-    'العقرب ♏': 'شخصية عميقة، غامضة، وقوية الإرادة. لديك حدس حاد وقدرة على رؤية ما يخفيه الآخرون. مخلص جداً لمن تمنحهم ثقتك، لكنك لا تثق بسهولة. تمر بتحوّلات حياتية عميقة.',
-    'القوس ♐': 'متفائل، محب للحرية، ومغامر. تبحث دائماً عن المعنى والحقيقة في الحياة. تحب السفر، التعلم، والتوسع في آفاق جديدة. صراحتك قد تجرح أحياناً، لكنها نابعة من نية طيبة.',
-    'الجدي ♑': 'طموح، منضبط، وواقعي. تبني نجاحك خطوة بخطوة عبر العمل الجاد والصبر. تتحمل المسؤولية بجدية، وتحترم التقاليد. قد تبدو بارداً من الخارج، لكنك مخلص جداً لمن تحبهم.',
-    'الدلو ♒': 'مستقل، مبتكر، وإنساني التفكير. تهتم بالمستقبل والأفكار التقدمية. أنت صديق مخلص، لكنك تحتاج مساحتك الخاصة. تفكر خارج الصندوق، وقد تكون غير تقليدي في آرائك.',
-    'الحوت ♓': 'حالم، حدسي، ومتعاطف بعمق. لديك خيال خصب وقدرة على فهم مشاعر الآخرين. فني الروح، وتميل للروحانيات. قد تكون حساساً جداً، لكن هذا ما يمنحك إبداعك الفريد.'
+    'الحمل ♈': 'تمتلك شخصية قيادية ومبادرة. أنت شخص شجاع، مباشر، ولا يخاف من التحديات.',
+    'الثور ♉': 'شخصيتك مستقرة، عملية، وتقدر الأمان المادي والعاطفي. أنت صبور جداً.',
+    'الجوزاء ♊': 'عقلك سريع، فضولي، ومتعدد الاهتمامات. تحب التواصل وتبادل الأفكار.',
+    'السرطان ♋': 'قلب كبير وعاطفة عميقة. أنت حساس، وترتبط بعائلتك وجذورك بعمق.',
+    'الأسد ♌': 'تمتلك كاريزما طبيعية، ثقة بالنفس، وكبرياءً إيجابياً. تحب أن تُقدر على جهودك.',
+    'العذراء ♍': 'دقيق، محلل، ومنظم. تبحث عن الكمال في كل شيء، وتمتلك قدرة خارقة على ملاحظة التفاصيل.',
+    'الميزان ♎': 'دبلوماسي، محب للانسجام، وذو ذوق رفيع. تكره الصراخ وتسعى دائماً للعدالة.',
+    'العقرب ♏': 'شخصية عميقة، غامضة، وقوية الإرادة. لديك حدس حاد وقدرة على رؤية ما يخفيه الآخرون.',
+    'القوس ♐': 'متفائل، محب للحرية، ومغامر. تبحث دائماً عن المعنى والحقيقة في الحياة.',
+    'الجدي ♑': 'طموح، منضبط، وواقعي. تبني نجاحك خطوة بخطوة عبر العمل الجاد والصبر.',
+    'الدلو ♒': 'مستقل، مبتكر، وإنساني التفكير. تهتم بالمستقبل والأفكار التقدمية.',
+    'الحوت ♓': 'حالم، حدسي، ومتعاطف بعمق. لديك خيال خصب وقدرة على فهم مشاعر الآخرين.'
 };
 
-// تفسيرات القمر في الأبراج
 const MOON_INTERPRETATIONS = {
-    'الحمل ♈': 'مشاعرك سريعة الاستجابة وحماسية. تحتاج للتحرك والتعبير الفوري عن مشاعرك. قد تكون سريع الغضب لكنك تنسى بسرعة. تحتاج لاستقلالية عاطفية.',
-    'الثور ♉': 'تحتاج للأمان العاطفي والمادي لتشعر بالراحة. مشاعرك مستقرة وعميقة. تحب الروتين والطقوس المريحة. تتمسك بالذكريات، وتكره التغييرات المفاجئة.',
-    'الجوزاء ♊': 'تحتاج للتواصل الفكري والشعور بالفضول لتستقر عاطفياً. تعبر عن مشاعرك بالكلمات، وتحب مشاركة أفكارك. قد تكون متقلباً عاطفياً، لكنك تتكيف بسرعة.',
-    'السرطان ♋': 'مشاعرك عميقة جداً ومرتبطة بالعائلة والجذور. تحتاج لبيت دافئ وأشعار بالأمان العاطفي. حدسك قوي، وتحمي من تحبهم بشراسة.',
-    'الأسد ♌': 'تحتاج للتقدير والاعتراف لتستقر عاطفياً. مشاعرك درامية وكريمة. تحب أن تكون مركز الاهتمام العاطفي، وتسخن قلبك بالحب والولاء.',
-    'العذراء ♍': 'تعبر عن مشاعرك من خلال الأفعال والخدمات العملية. تحتاج للنظام والنظافة لتشعر بالراحة العاطفية. قد تكبت مشاعرك أحياناً، لكنك تهتم بالتفاصيل الدقيقة لمن تحبهم.',
-    'الميزان ♎': 'تحتاج للانسجام والعلاقات المتوازنة لتستقر عاطفياً. تكره الوحدة والصراعات. مشاعرك راقية، وتحيط نفسك بالجمال والأشخاص الودودين.',
-    'العقرب ♏': 'مشاعرك عميقة جداً وكثيفة. لا تثق بسهولة، لكنك مخلص بشراسة لمن تمنحهم ثقتك. تمر بتحوّلات عاطفية تعيد تشكيلك. حدسك العاطفي قوي جداً.',
-    'القوس ♐': 'تحتاج للحرية والتفاؤل لتستقر عاطفياً. تكره الشعور بالحصار العاطفي. مشاعرك فلسفية، وتحب مشاركة أحلامك الكبيرة مع من تحبهم.',
-    'الجدي ♑': 'تعبر عن مشاعرك بجدية ومسؤولية. قد تبدو بارداً عاطفياً، لكنك مخلص جداً. تحتاج للأمان المادي والاحترام لتشعر بالاستقرار العاطفي.',
-    'الدلو ♒': 'تحتاج للاستقلالية والمساحة الشخصية. مشاعرك إنسانية ومتحررة. تهتم بالأصدقاء والمجتمع، لكنك تحافظ على مسافة عاطفية معينة.',
-    'الحوت ': 'مشاعرك عميقة جداً وحدسية. تمتص مشاعر من حولك بسهولة. تحتاج لفترات عزلة لإعادة شحن طاقتك. فني الروح، وتعاطفك لا حدود له.'
+    'الحمل ♈': 'مشاعرك سريعة الاستجابة وحماسية. تحتاج للتحرك والتعبير الفوري عن مشاعرك.',
+    'الثور ♉': 'تحتاج للأمان العاطفي والمادي لتشعر بالراحة. مشاعرك مستقرة وعميقة.',
+    'الجوزاء ♊': 'تحتاج للتواصل الفكري والشعور بالفضول لتستقر عاطفياً. تعبر عن مشاعرك بالكلمات.',
+    'السرطان ♋': 'مشاعرك عميقة جداً ومرتبطة بالعائلة والجذور. تحتاج لبيت دافئ وأشعار بالأمان.',
+    'الأسد ♌': 'تحتاج للتقدير والاعتراف لتستقر عاطفياً. مشاعرك درامية وكريمة.',
+    'العذراء ♍': 'تعبر عن مشاعرك من خلال الأفعال والخدمات العملية. تحتاج للنظام والنظافة.',
+    'الميزان ♎': 'تحتاج للانسجام والعلاقات المتوازنة لتستقر عاطفياً. تكره الوحدة والصراعات.',
+    'العقرب ♏': 'مشاعرك عميقة جداً وكثيفة. لا تثق بسهولة، لكنك مخلص بشراسة لمن تمنحهم ثقتك.',
+    'القوس ♐': 'تحتاج للحرية والتفاؤل لتستقر عاطفياً. تكره الشعور بالحصار العاطفي.',
+    'الجدي ♑': 'تعبر عن مشاعرك بجدية ومسؤولية. تحتاج للأمان المادي والاحترام لتشعر بالاستقرار.',
+    'الدلو ♒': 'تحتاج للاستقلالية والمساحة الشخصية. مشاعرك إنسانية ومتحررة.',
+    'الحوت ♓': 'مشاعرك عميقة جداً وحدسية. تمتص مشاعر من حولك بسهولة وتحتاج لفترات عزلة.'
 };
 
-// تفسيرات الطالع
 const ASC_INTERPRETATIONS = {
-    'الحمل ♈': 'تظهر للعالم كشخص شجاع، مباشر، وحيوي. أول انطباع تتركه هو الطاقة والحماس. الناس يرونك قائداً طبيعياً لا يخاف من المبادرات.',
-    'الثور ♉': 'تبدو هادئاً، مستقراً، وموثوقاً. أول انطباع هو الدفء والثبات. الناس يشعرون بالأمان بجانبك، ويقدرون واقعيتك.',
-    'الجوزاء ♊': 'تظهر كشخص اجتماعي، ذكي، وفضولي. أول انطباع هو الحيوية الذهنية والقدرة على التواصل. الناس يجدونك ممتعاً ومثيراً للاهتمام.',
-    'السرطان ♋': 'تبدو ودوداً، راعياً، وعاطفياً. أول انطباع هو الدفء العائلي والاهتمام. الناس يشعرون أنك تهتم بهم حقاً.',
-    'الأسد ♌': 'تظهر بثقة، كاريزما، ودفء. أول انطباع هو القوة والجاذبية. الناس ينجذبون لطاقتك الإيجابية وقيادتك الطبيعية.',
-    'العذراء ♍': 'تبدو هادئاً، دقيقاً، ومتواضعاً. أول انطباع هو الذكاء العملي والاهتمام بالتفاصيل. الناس يرونك شخصاً يمكن الاعتماد عليه.',
-    'الميزان ♎': 'تظهر بدبلوماسية، ذوق، وانسجام. أول انطباع هو الجاذبية الاجتماعية والتهذيب. الناس يجدونك ودوداً ومحبوباً.',
-    'العقرب ♏': 'تبدو غامضاً، قوياً، وعميقاً. أول انطباع هو الحدة والقدرة على الملاحظة. الناس يشعرون أن هناك أكثر مما تراه العين.',
-    'القوس ♐': 'تظهر بتفاؤل، حماسة، وحب للمغامرة. أول انطباع هو الإيجابية والرغبة في الاستكشاف. الناس يجدونك ملهماً.',
-    'الجدي ': 'تبدو جاداً، طموحاً، ومسؤولاً. أول انطباع هو النضج والموثوقية. الناس يرونك شخصاً ناضجاً قبل سنك.',
-    'الدلو ♒': 'تظهر باستقلالية، ابتكار، وتفرد. أول انطباع هو الذكاء غير التقليدي. الناس يجدونك مميزاً ومثيراً للاهتمام.',
-    'الحوت ♓': 'تبدو حالماً، لطيفاً، وحدسياً. أول انطباع هو اللطف والتعاطف. الناس يشعرون براحة غامضة بجانبك.'
+    'الحمل ♈': 'تظهر للعالم كشخص شجاع، مباشر، وحيوي. الناس يرونك قائداً طبيعياً.',
+    'الثور ♉': 'تبدو هادئاً، مستقراً، وموثوقاً. الناس يشعرون بالأمان بجانبك.',
+    'الجوزاء ♊': 'تظهر كشخص اجتماعي، ذكي، وفضولي. الناس يجدونك ممتعاً ومثيراً للاهتمام.',
+    'السرطان ♋': 'تبدو ودوداً، راعياً، وعاطفياً. الناس يشعرون أنك تهتم بهم حقاً.',
+    'الأسد ♌': 'تظهر بثقة، كاريزما، ودفء. الناس ينجذبون لطاقتك الإيجابية.',
+    'العذراء ♍': 'تبدو هادئاً، دقيقاً، ومتواضعاً. الناس يرونك شخصاً يمكن الاعتماد عليه.',
+    'الميزان ♎': 'تظهر بدبلوماسية، ذوق، وانسجام. الناس يجدونك ودوداً ومحبوباً.',
+    'العقرب ♏': 'تبدو غامضاً، قوياً، وعميقاً. الناس يشعرون أن هناك أكثر مما تراه العين.',
+    'القوس ♐': 'تظهر بتفاؤل، حماسة، وحب للمغامرة. الناس يجدونك ملهماً.',
+    'الجدي ♑': 'تبدو جاداً، طموحاً، ومسؤولاً. الناس يرونك شخصاً ناضجاً قبل سنك.',
+    'الدلو ♒': 'تظهر باستقلالية، ابتكار، وتفرد. الناس يجدونك مميزاً ومثيراً للاهتمام.',
+    'الحوت ♓': 'تبدو حالماً، لطيفاً، وحدسياً. الناس يشعرون براحة غامضة بجانبك.'
 };
 
-// تفسيرات البيوت
 const HOUSE_INTERPRETATIONS = {
-    1: 'بيت الشخصية والهوية - يؤثر على مظهرك الخارجي وطريقة تعاملك مع الحياة',
-    2: 'بيت المال والقيم - يؤثر على علاقتك بالمال ومواردك المادية',
-    3: 'بيت التواصل والإخوة - يؤثر على علاقاتك القريبة وطريقة تفكيرك',
-    4: 'بيت المنزل والعائلة - يؤثر على جذورك وحياتك الخاصة',
-    5: 'بيت الإبداع والرومانسية - يؤثر على حبك، أطفالك، ومواهبك',
-    6: 'بيت العمل والصحة - يؤثر على روتينك اليومي وخدمتك للآخرين',
-    7: 'بيت الشراكة والزواج - يؤثر على علاقاتك العاطفية والشراكات',
-    8: 'بيت التحول والمشاركة - يؤثر على التغييرات العميقة والموارد المشتركة',
-    9: 'بيت الفلسفة والسفر - يؤثر على معتقداتك وتوسعاتك',
-    10: 'بيت المهنة والسمعة - يؤثر على مسارك المهني وصورتك العامة',
-    11: 'بيت الأصدقاء والأهداف - يؤثر على شبكتك الاجتماعية وأحلامك',
-    12: 'بيت اللاوعي والعزلة - يؤثر على عالمك الداخلي وروحانيتك'
+    1: 'بيت الشخصية والهوية - يؤثر على مظهرك الخارجي وطريقة تعاملك مع الحياة.',
+    2: 'بيت المال والقيم - يؤثر على علاقتك بالمال ومواردك المادية.',
+    3: 'بيت التواصل والإخوة - يؤثر على علاقاتك القريبة وطريقة تفكيرك.',
+    4: 'بيت المنزل والعائلة - يؤثر على جذورك وحياتك الخاصة.',
+    5: 'بيت الإبداع والرومانسية - يؤثر على حبك، أطفالك، ومواهبك.',
+    6: 'بيت العمل والصحة - يؤثر على روتينك اليومي وخدمتك للآخرين.',
+    7: 'بيت الشراكة والزواج - يؤثر على علاقاتك العاطفية والشراكات.',
+    8: 'بيت التحول والمشاركة - يؤثر على التغييرات العميقة والموارد المشتركة.',
+    9: 'بيت الفلسفة والسفر - يؤثر على معتقداتك وتوسعاتك.',
+    10: 'بيت المهنة والسمعة - يؤثر على مسارك المهني وصورتك العامة.',
+    11: 'بيت الأصدقاء والأهداف - يؤثر على شبكتك الاجتماعية وأحلامك.',
+    12: 'بيت اللاوعي والعزلة - يؤثر على عالمك الداخلي وروحانيتك.'
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -275,11 +252,10 @@ function getSign(longitude) {
     if (lon < 0) lon += 360;
     const idx = Math.floor(lon / 30);
     const degree = (lon % 30).toFixed(2);
-    return { name: SIGNS_AR[idx], nameEn: SIGNS_EN[idx], degree: degree, index: idx };
+    return { name: SIGNS_AR[idx], degree: degree, index: idx };
 }
 
-function getHouse(planetLon, ascLon, mcLon) {
-    // حساب تقريبي للبيت باستخدام نظام Whole Sign المبسط
+function getHouse(planetLon, ascLon) {
     const houses = [];
     for (let i = 0; i < 12; i++) {
         houses.push((ascLon + i * 30) % 360);
@@ -293,13 +269,8 @@ function getHouse(planetLon, ascLon, mcLon) {
     return 1;
 }
 
-// ═══════════════════════════════════════════════════════════
-// بناء التقرير النصي
-// ═══════════════════════════════════════════════════════════
 function buildInterpretation(data) {
     let report = '';
-
-    // 1. المقدمة الشخصية
     const sunText = SUN_INTERPRETATIONS[data.sun.sign.name] || '';
     const moonText = MOON_INTERPRETATIONS[data.moon.sign.name] || '';
     const ascText = ASC_INTERPRETATIONS[data.ascendant.sign.name] || '';
@@ -308,23 +279,18 @@ function buildInterpretation(data) {
         <h2>🌟 الثالوث الأساسي في شخصيتك</h2>
         <h3>☀️ الشمس في ${data.sun.sign.name} - جوهر شخصيتك</h3>
         <p>${sunText}</p>
-        
         <h3>🌙 القمر في ${data.moon.sign.name} - عالمك العاطفي</h3>
         <p>${moonText}</p>
-        
         <h3>⬆️ الطالع في ${data.ascendant.sign.name} - قناعك الخارجي</h3>
         <p>${ascText}</p>
     </div>`;
 
-    // 2. تفسير الكواكب
-    report += `<div class="report-section">
-        <h2>🪐 مواقع الكواكب في خارطتك</h2>`;
-    
+    report += `<div class="report-section"><h2>🪐 مواقع الكواكب في خارطتك</h2>`;
     const planetDetails = [
         { key: 'mercury', name: 'عطارد', emoji: '☿️', desc: 'طريقة تفكيرك وتواصلك' },
         { key: 'venus', name: 'الزهرة', emoji: '♀️', desc: 'كيف تحب وتتعلق' },
-        { key: 'mars', name: 'المريخ', emoji: '♂️', desc: 'طاقة وغضب' },
-        { key: 'jupiter', name: 'المشتري', emoji: '♃', desc: 'حظك وتوسعك' },
+        { key: 'mars', name: 'المريخ', emoji: '♂️', desc: 'طاقة عملك وغضبك' },
+        { key: 'jupiter', name: 'المشتري', emoji: '♃', desc: 'حظك ومصادر توسعك' },
         { key: 'saturn', name: 'زحل', emoji: '♄', desc: 'مسؤولياتك وتحدياتك' }
     ];
 
@@ -335,25 +301,19 @@ function buildInterpretation(data) {
         <p><strong>الموقع:</strong> ${planet.sign.name} (الدرجة ${planet.sign.degree}°) في البيت ${planet.house}</p>
         <p><strong>التأثير:</strong> ${house}</p>`;
     });
-
     report += `</div>`;
 
-    // 3. الزوايا الحساسة
     report += `<div class="report-section">
         <h2>📐 الزوايا الحساسة في خارطتك</h2>
         <h3>⬆️ الطالع (Ascendant): ${data.ascendant.sign.name} (${data.ascendant.sign.degree}°)</h3>
-        <p>الطالع هو البرج الذي كان يشرق على الأفق الشرقي لحظة ميلادك. هو يحدد انطباعك الأول عن الآخرين، وشكلك الخارجي، وطريقة تعاملك مع الحياة الجديدة.</p>
-        
+        <p>البرج الذي كان يشرق على الأفق الشرقي لحظة ميلادك. يحدد انطباعك الأول وشكلك الخارجي.</p>
         <h3>🔝 وسط السماء (MC): ${data.midheaven.sign.name} (${data.midheaven.sign.degree}°)</h3>
-        <p>وسط السماء يمثل مسارك المهني، سمعتك العامة، وطموحاتك. موقع الكواكب هنا يشير إلى طبيعة النجاح الذي تسعى إليه.</p>
+        <p>يمثل مسارك المهني، سمعتك العامة، وطموحاتك في الحياة.</p>
     </div>`;
 
-    // 4. الخلاصة
     report += `<div class="report-section">
         <h2>💡 خلاصة شخصيتك الفلكية</h2>
-        <p>خارطتك الفلكية تكشف عن شخصية فريدة تجمع بين طاقة ${data.sun.sign.name.split(' ')[0]} في جوهرها، وحساسية ${data.moon.sign.name.split(' ')[0]} في عالمها العاطفي، مع مظهر ${data.ascendant.sign.name.split(' ')[0]} الهادئ والدقيق.</p>
-        <p>نقاط قوتك الرئيسية: ${data.sun.sign.name.includes('أسد') ? 'القيادة والكاريزما' : data.sun.sign.name.includes('عذراء') ? 'الدقة والتحليل' : 'التوازن والقوة'}.</p>
-        <p>تحدياتك: تعلم التوازن بين ${data.moon.sign.name.includes('ميزان') ? 'الانسجام مع الآخرين والتعبير عن ذاتك' : 'عالمك الداخلي والعالم الخارجي'}.</p>
+        <p>خارطتك تكشف عن شخصية فريدة تجمع بين طاقة ${data.sun.sign.name.split(' ')[0]} في جوهرها، وحساسية ${data.moon.sign.name.split(' ')[0]} في عالمها العاطفي، مع مظهر ${data.ascendant.sign.name.split(' ')[0]} الهادئ والدقيق.</p>
     </div>`;
 
     return report;
@@ -361,7 +321,7 @@ function buildInterpretation(data) {
 
 // ═══════════════════════════════════════════════════════════
 // معالجة النموذج
-// ══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 document.getElementById('chartForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -396,10 +356,7 @@ document.getElementById('chartForm').addEventListener('submit', async function(e
 
         // التوقيت الصيفي للعراق 1991 (UTC+4)
         utcHour -= 4;
-        if (utcHour < 0) {
-            utcHour += 24;
-            utcDay -= 1;
-        }
+        if (utcHour < 0) { utcHour += 24; utcDay -= 1; }
 
         const targetDate = new Date(Date.UTC(utcYear, utcMonth - 1, utcDay, utcHour, utcMinute, 0));
         const angles = calculateAngles(utcYear, utcMonth, utcDay, utcHour, utcMinute, lat, lng);
@@ -421,14 +378,9 @@ document.getElementById('chartForm').addEventListener('submit', async function(e
             const vec = Astronomy.GeoVector(Astronomy.Body[p.body], targetDate, true);
             const ecl = Astronomy.Ecliptic(vec);
             const sign = getSign(ecl.elon);
-            const house = getHouse(ecl.elon, angles.asc, angles.mc);
+            const house = getHouse(ecl.elon, angles.asc);
             
-            chartData[p.key] = {
-                sign: sign,
-                degree: parseFloat(sign.degree),
-                house: house,
-                longitude: parseFloat(ecl.elon.toFixed(2))
-            };
+            chartData[p.key] = { sign: sign, degree: parseFloat(sign.degree), house: house, longitude: parseFloat(ecl.elon.toFixed(2)) };
 
             planetsHTML += `
                 <div class="planet-card">
@@ -444,13 +396,13 @@ document.getElementById('chartForm').addEventListener('submit', async function(e
         chartData.ascendant = { sign: getSign(angles.asc), longitude: parseFloat(angles.asc.toFixed(2)) };
         chartData.midheaven = { sign: getSign(angles.mc), longitude: parseFloat(angles.mc.toFixed(2)) };
 
-        // بناء التقرير
         const interpretation = buildInterpretation(chartData);
+        const whatsappText = encodeURIComponent(`مرحباً، أريد طلب التقرير الفلكي الشامل والدقيق لـ ${name} (تاريخ الميلاد: ${dateVal})`);
 
         let html = `
             <div id="report-content">
                 <h2 style="color:#ffd700; text-align:center; margin-bottom:10px;">✨ خارطة ${name} الفلكية</h2>
-                <p style="text-align:center; color:#aaa; margin-bottom:5px;">📅 ${dateVal} | ⏰ ${timeVal} |  ${cityName}</p>
+                <p style="text-align:center; color:#aaa; margin-bottom:5px;">📅 ${dateVal} | ⏰ ${timeVal} | 🌍 ${cityName}</p>
                 <p style="text-align:center; color:#888; font-size:0.85em; margin-bottom:25px;">الإحداثيات: ${lat}°N, ${lng}°E</p>
                 
                 <div class="report-section">
@@ -458,29 +410,19 @@ document.getElementById('chartForm').addEventListener('submit', async function(e
                     ${planetsHTML}
                     <div class="planet-card angle-card">
                         <div class="planet-emoji">⬆️</div>
-                        <div>
-                            <div class="planet-name">الطالع (Ascendant)</div>
-                            <div class="planet-info">برج ${chartData.ascendant.sign.name} | الدرجة ${chartData.ascendant.sign.degree}°</div>
-                        </div>
+                        <div><div class="planet-name">الطالع (Ascendant)</div><div class="planet-info">برج ${chartData.ascendant.sign.name} | الدرجة ${chartData.ascendant.sign.degree}°</div></div>
                     </div>
                     <div class="planet-card angle-card">
                         <div class="planet-emoji">🔝</div>
-                        <div>
-                            <div class="planet-name">وسط السماء (MC)</div>
-                            <div class="planet-info">برج ${chartData.midheaven.sign.name} | الدرجة ${chartData.midheaven.sign.degree}°</div>
-                        </div>
+                        <div><div class="planet-name">وسط السماء (MC)</div><div class="planet-info">برج ${chartData.midheaven.sign.name} | الدرجة ${chartData.midheaven.sign.degree}°</div></div>
                     </div>
                 </div>
-                
                 ${interpretation}
             </div>
 
             <div class="action-buttons">
                 <button class="btn-pdf" onclick="downloadPDF('${name}', '${dateVal}')">📄 تحميل التقرير PDF</button>
-                <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`مرحباً، أريد التقرير الفلكي الشامل لـ ${name} (مولود ${dateVal})`)}" 
-                   target="_blank" class="btn-whatsapp" style="text-decoration:none; text-align:center; padding:16px; border-radius:10px; font-weight:bold;">
-                   💬 احصل على التفسير الكامل عبر واتساب
-                </a>
+                <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappText}" target="_blank" class="btn-whatsapp">💬 احصل على تحليل أعمق عبر واتساب</a>
             </div>
 
             <div class="accuracy-note">
@@ -490,23 +432,6 @@ document.getElementById('chartForm').addEventListener('submit', async function(e
 
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';
-
-        // حفظ في Supabase إذا كان متاحاً
-        if (supabase) {
-            try {
-                await supabase.from('charts').insert([{
-                    name: name,
-                    birth_date: dateVal,
-                    birth_time: timeVal,
-                    city: cityName,
-                    lat: lat,
-                    lng: lng,
-                    chart_data: chartData,
-                    created_at: new Date().toISOString()
-                }]);
-            } catch(e) { console.log('Supabase save failed:', e); }
-        }
-
         resultDiv.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
@@ -518,7 +443,6 @@ document.getElementById('chartForm').addEventListener('submit', async function(e
     }
 });
 
-// تحميل PDF
 function downloadPDF(name, date) {
     const element = document.getElementById('report-content');
     const opt = {
@@ -531,6 +455,5 @@ function downloadPDF(name, date) {
     html2pdf().set(opt).from(element).save();
 }
 </script>
-
 </body>
 </html>
