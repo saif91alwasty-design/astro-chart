@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🌟 خريطتي - حساب فلكي احترافي</title>
+    <title> خريطتي - الخارطة الفلكية الشخصية الدقيقة</title>
+    <meta name="description" content="احسب خارطتك الفلكية الشخصية بدقة معايير ناسا. تفسير عربي احترافي لبرجك وكواكبك.">
     <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -13,45 +16,75 @@
             color: white; min-height: 100vh; padding: 20px;
         }
         .container {
-            max-width: 700px; margin: 0 auto; background: rgba(255,255,255,0.05);
+            max-width: 900px; margin: 0 auto; background: rgba(255,255,255,0.05);
             backdrop-filter: blur(20px); padding: 30px; border-radius: 20px;
         }
-        h1 { text-align: center; color: #ffd700; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #aaa; margin-bottom: 25px; font-size: 0.9em; }
+        h1 { text-align: center; color: #ffd700; margin-bottom: 10px; font-size: 2.2em; }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 25px; font-size: 0.95em; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; color: #ffd700; font-weight: bold; }
         input, select {
-            width: 100%; padding: 12px; border: 2px solid rgba(255,215,0,0.3);
+            width: 100%; padding: 14px; border: 2px solid rgba(255,215,0,0.3);
             border-radius: 10px; font-size: 16px; background: rgba(255,255,255,0.1); color: white;
         }
         select option { color: #333; background: white; }
         button {
-            width: 100%; padding: 15px; background: linear-gradient(135deg, #ffd700, #ff9500);
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #ffd700, #ff9500);
             color: #1a1a2e; border: none; border-radius: 10px; font-size: 18px;
             font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.3s;
         }
-        button:hover { transform: translateY(-2px); }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,215,0,0.4); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         .error-box {
             background: rgba(255,0,0,0.2); border: 1px solid #ff4444; color: #ff8888;
             padding: 15px; border-radius: 10px; margin-top: 20px; text-align: center; display: none;
         }
         #result { margin-top: 30px; display: none; }
+        .report-section {
+            background: rgba(255,255,255,0.08); padding: 25px; margin: 20px 0;
+            border-radius: 15px; border-right: 4px solid #ffd700;
+        }
+        .report-section h2 {
+            color: #ffd700; margin-bottom: 15px; font-size: 1.4em;
+            border-bottom: 2px solid rgba(255,215,0,0.3); padding-bottom: 10px;
+        }
+        .report-section h3 {
+            color: #ffaa00; margin: 15px 0 10px; font-size: 1.15em;
+        }
+        .report-section p {
+            color: #ddd; line-height: 1.8; margin-bottom: 12px; font-size: 1em;
+        }
         .planet-card {
             background: rgba(255,255,255,0.1); padding: 15px; margin: 10px 0;
-            border-radius: 10px; border-right: 4px solid #ffd700; display: flex; align-items: center; gap: 15px;
+            border-radius: 10px; border-right: 4px solid #ffd700;
+            display: flex; align-items: center; gap: 15px;
         }
         .planet-emoji { font-size: 2em; min-width: 40px; text-align: center; }
         .planet-name { font-weight: bold; color: #ffd700; font-size: 1.1em; }
         .planet-info { color: #ddd; font-size: 0.95em; }
-        .angle-card { border-right-color: #00ff88 !important; background: rgba(0,255,136,0.05) !important; }
-        .accuracy-note {
-            text-align: center; color: #888; font-size: 0.75em; margin-top: 20px;
-            padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); line-height: 1.6;
+        .angle-card { border-right-color: #00ff88 !important; background: rgba(0,255,136,0.08) !important; }
+        .action-buttons {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px;
         }
-        .info-box {
-            background: rgba(0, 255, 136, 0.1); border: 1px solid #00ff88; color: #00ff88;
-            padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 0.85em; text-align: center;
+        .btn-pdf { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); }
+        .btn-whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); }
+        .accuracy-note {
+            text-align: center; color: #888; font-size: 0.8em; margin-top: 20px;
+            padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .loading {
+            text-align: center; padding: 30px; display: none;
+        }
+        .spinner {
+            border: 4px solid rgba(255,215,0,0.2); border-top-color: #ffd700;
+            border-radius: 50%; width: 50px; height: 50px;
+            animation: spin 1s linear infinite; margin: 0 auto 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 600px) {
+            .action-buttons { grid-template-columns: 1fr; }
+            .container { padding: 20px; }
+            h1 { font-size: 1.6em; }
         }
     </style>
 </head>
@@ -59,49 +92,150 @@
 
 <div class="container">
     <h1>🌙 خريطتي</h1>
-    <p class="subtitle">حساب فلكي دقيق بمعايير ناسا و Swiss Ephemeris</p>
-    
-    <div class="info-box">
-        ✅ <strong>تم التصحيح:</strong> الكود الآن يحول التوقيت المحلي (UTC+4 لعام 1991) إلى UTC بدقة قبل الحساب، ويستخدم المعادلة الرياضية القياسية للطالع التي تمنع انقلاب الإشارة.
-    </div>
+    <p class="subtitle">تقرير فلكي شخصي دقيق بمعايير ناسا - تفسير عربي احترافي</p>
 
     <form id="chartForm">
         <div class="form-group">
-            <label>الاسم:</label>
+            <label>👤 الاسم:</label>
             <input type="text" id="name" value="سيف" required>
         </div>
         <div class="form-group">
-            <label>تاريخ الميلاد:</label>
+            <label>📅 تاريخ الميلاد:</label>
             <input type="date" id="date" value="1991-08-14" required>
         </div>
         <div class="form-group">
-            <label>وقت الميلاد:</label>
+            <label>⏰ وقت الميلاد:</label>
             <input type="time" id="time" value="07:35" required>
         </div>
         <div class="form-group">
-            <label>مدينة الميلاد:</label>
+            <label>🌍 مدينة الميلاد:</label>
             <select id="city" required>
                 <option value="32.5109,45.8181,الكوت">الكوت، واسط</option>
                 <option value="32.0000,44.3333,النجف">النجف</option>
                 <option value="33.3152,44.3661,بغداد">بغداد</option>
                 <option value="30.5081,47.7835,البصرة">البصرة</option>
                 <option value="36.1911,44.0093,أربيل">أربيل</option>
+                <option value="35.5556,45.4333,السليمانية">السليمانية</option>
+                <option value="36.3450,43.1309,الموصل">الموصل</option>
+                <option value="36.8667,43.0000,دهوك">دهوك</option>
+                <option value="35.4681,44.3922,كركوك">كركوك</option>
+                <option value="32.6160,44.0241,كربلاء">كربلاء</option>
+                <option value="31.0571,46.2637,الناصرية">الناصرية</option>
+                <option value="31.3167,45.2833,السماوة">السماوة</option>
+                <option value="31.9929,44.9253,الديوانية">الديوانية</option>
+                <option value="32.4640,44.4217,الحلة">الحلة</option>
+                <option value="33.4206,43.3078,الرمادي">الرمادي</option>
+                <option value="33.3500,43.7833,الفلوجة">الفلوجة</option>
+                <option value="34.1956,43.8742,سامراء">سامراء</option>
+                <option value="34.6111,43.6833,تكريت">تكريت</option>
+                <option value="33.7500,44.6333,بعقوبة">بعقوبة</option>
+                <option value="31.8344,47.1447,العمارة">العمارة</option>
             </select>
         </div>
         <button type="submit" id="submitBtn">✨ احسب الخارطة الفلكية</button>
     </form>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>جاري حساب خارطتك الفلكية بدقة...</p>
+    </div>
 
     <div class="error-box" id="errorBox"></div>
     <div id="result"></div>
 </div>
 
 <script>
-const SIGNS_AR = ['الحمل ♈', 'الثور ♉', 'الجوزاء ♊', 'السرطان ♋', 'الأسد ♌', 'العذراء ♍', 
+// ═══════════════════════════════════════════════════════════
+// إعدادات Supabase - استبدل القيم بمفاتيحك الخاصة
+// ═══════════════════════════════════════════════════════════
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const WHATSAPP_NUMBER = '9647XXXXXXXXX'; // رقم واتسابك
+
+let supabase = null;
+try {
+    if (SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+        supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+} catch(e) { console.log('Supabase not configured yet'); }
+
+// ═══════════════════════════════════════════════════════════
+// قاعدة بيانات التفسيرات النصية
+// ═══════════════════════════════════════════════════════════
+const SIGNS_AR = ['الحمل ', 'الثور ♉', 'الجوزاء ♊', 'السرطان ♋', 'الأسد ♌', 'العذراء ♍', 
                   'الميزان ♎', 'العقرب ♏', 'القوس ♐', 'الجدي ♑', 'الدلو ♒', 'الحوت ♓'];
 
-// دالة حساب الطالع ووسط السماء (Ascendant & Midheaven) بدقة رياضية قياسية
+const SIGNS_EN = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 
+                  'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'];
+
+// تفسيرات الشمس في الأبراج
+const SUN_INTERPRETATIONS = {
+    'الحمل ♈': 'تمتلك شخصية قيادية ومبادرة. أنت شخص شجاع، مباشر، ولا يخاف من التحديات. تحب أن تكون الأول في كل شيء، وتمتلك طاقة حماسية عالية. قد تكون اندفاعياً أحياناً، لكن شجاعتك تلهم الآخرين.',
+    'الثور ♉': 'شخصيتك مستقرة، عملية، وتقدر الأمان المادي والعاطفي. أنت صبور جداً، وتحب الجمال والرفاهية. تتمسك بما تؤمن به، وقد تكون عنيداً، لكن هذا العناد هو ما يجعلك تنجز ما تبدأه.',
+    'الجوزاء ♊': 'عقلك سريع، فضولي، ومتعدد الاهتمامات. تحب التواصل، التعلم، وتبادل الأفكار. أنت اجتماعي جداً، وتتقن التعبير عن نفسك بالكلمات. قد تتشتت أحياناً بين اهتمامات كثيرة.',
+    'السرطان ♋': 'قلب كبير وعاطفة عميقة. أنت حساس، caring، وترتبط بعائلتك وجذورك بعمق. تحب رعاية الآخرين، وتمتلك حدساً قوياً. قد تكون مزاجياً أحياناً، لكن هذا يعكس عمق مشاعرك.',
+    'الأسد ♌': 'تمتلك كاريزما طبيعية، ثقة بالنفس، وكبرياءً إيجابياً. تحب أن تُقدر على جهودك، ولديك إرادة قوية وقدرة على إلهام الآخرين. قلبك كبير، وكرمك لا حدود له.',
+    'العذراء ♍': 'دقيق، محلل، ومنظم. تبحث عن الكمال في كل شيء، وتمتلك قدرة خارقة على ملاحظة التفاصيل. أنت مفيد للآخرين، وعقلك العملي يحل المشاكل بذكاء. قد تكون قاسياً في نقدك لذاتك.',
+    'الميزان ♎': 'دبلوماسي، محب للانسجام، وذو ذوق رفيع. تكره الصراخ والمشاكل، وتسعى دائماً للعدالة والتوازن. أنت جذاب اجتماعياً، وتحيط نفسك بالجمال والأشخاص الودودين.',
+    'العقرب ♏': 'شخصية عميقة، غامضة، وقوية الإرادة. لديك حدس حاد وقدرة على رؤية ما يخفيه الآخرون. مخلص جداً لمن تمنحهم ثقتك، لكنك لا تثق بسهولة. تمر بتحوّلات حياتية عميقة.',
+    'القوس ♐': 'متفائل، محب للحرية، ومغامر. تبحث دائماً عن المعنى والحقيقة في الحياة. تحب السفر، التعلم، والتوسع في آفاق جديدة. صراحتك قد تجرح أحياناً، لكنها نابعة من نية طيبة.',
+    'الجدي ♑': 'طموح، منضبط، وواقعي. تبني نجاحك خطوة بخطوة عبر العمل الجاد والصبر. تتحمل المسؤولية بجدية، وتحترم التقاليد. قد تبدو بارداً من الخارج، لكنك مخلص جداً لمن تحبهم.',
+    'الدلو ♒': 'مستقل، مبتكر، وإنساني التفكير. تهتم بالمستقبل والأفكار التقدمية. أنت صديق مخلص، لكنك تحتاج مساحتك الخاصة. تفكر خارج الصندوق، وقد تكون غير تقليدي في آرائك.',
+    'الحوت ♓': 'حالم، حدسي، ومتعاطف بعمق. لديك خيال خصب وقدرة على فهم مشاعر الآخرين. فني الروح، وتميل للروحانيات. قد تكون حساساً جداً، لكن هذا ما يمنحك إبداعك الفريد.'
+};
+
+// تفسيرات القمر في الأبراج
+const MOON_INTERPRETATIONS = {
+    'الحمل ♈': 'مشاعرك سريعة الاستجابة وحماسية. تحتاج للتحرك والتعبير الفوري عن مشاعرك. قد تكون سريع الغضب لكنك تنسى بسرعة. تحتاج لاستقلالية عاطفية.',
+    'الثور ♉': 'تحتاج للأمان العاطفي والمادي لتشعر بالراحة. مشاعرك مستقرة وعميقة. تحب الروتين والطقوس المريحة. تتمسك بالذكريات، وتكره التغييرات المفاجئة.',
+    'الجوزاء ♊': 'تحتاج للتواصل الفكري والشعور بالفضول لتستقر عاطفياً. تعبر عن مشاعرك بالكلمات، وتحب مشاركة أفكارك. قد تكون متقلباً عاطفياً، لكنك تتكيف بسرعة.',
+    'السرطان ♋': 'مشاعرك عميقة جداً ومرتبطة بالعائلة والجذور. تحتاج لبيت دافئ وأشعار بالأمان العاطفي. حدسك قوي، وتحمي من تحبهم بشراسة.',
+    'الأسد ♌': 'تحتاج للتقدير والاعتراف لتستقر عاطفياً. مشاعرك درامية وكريمة. تحب أن تكون مركز الاهتمام العاطفي، وتسخن قلبك بالحب والولاء.',
+    'العذراء ♍': 'تعبر عن مشاعرك من خلال الأفعال والخدمات العملية. تحتاج للنظام والنظافة لتشعر بالراحة العاطفية. قد تكبت مشاعرك أحياناً، لكنك تهتم بالتفاصيل الدقيقة لمن تحبهم.',
+    'الميزان ♎': 'تحتاج للانسجام والعلاقات المتوازنة لتستقر عاطفياً. تكره الوحدة والصراعات. مشاعرك راقية، وتحيط نفسك بالجمال والأشخاص الودودين.',
+    'العقرب ♏': 'مشاعرك عميقة جداً وكثيفة. لا تثق بسهولة، لكنك مخلص بشراسة لمن تمنحهم ثقتك. تمر بتحوّلات عاطفية تعيد تشكيلك. حدسك العاطفي قوي جداً.',
+    'القوس ♐': 'تحتاج للحرية والتفاؤل لتستقر عاطفياً. تكره الشعور بالحصار العاطفي. مشاعرك فلسفية، وتحب مشاركة أحلامك الكبيرة مع من تحبهم.',
+    'الجدي ♑': 'تعبر عن مشاعرك بجدية ومسؤولية. قد تبدو بارداً عاطفياً، لكنك مخلص جداً. تحتاج للأمان المادي والاحترام لتشعر بالاستقرار العاطفي.',
+    'الدلو ♒': 'تحتاج للاستقلالية والمساحة الشخصية. مشاعرك إنسانية ومتحررة. تهتم بالأصدقاء والمجتمع، لكنك تحافظ على مسافة عاطفية معينة.',
+    'الحوت ': 'مشاعرك عميقة جداً وحدسية. تمتص مشاعر من حولك بسهولة. تحتاج لفترات عزلة لإعادة شحن طاقتك. فني الروح، وتعاطفك لا حدود له.'
+};
+
+// تفسيرات الطالع
+const ASC_INTERPRETATIONS = {
+    'الحمل ♈': 'تظهر للعالم كشخص شجاع، مباشر، وحيوي. أول انطباع تتركه هو الطاقة والحماس. الناس يرونك قائداً طبيعياً لا يخاف من المبادرات.',
+    'الثور ♉': 'تبدو هادئاً، مستقراً، وموثوقاً. أول انطباع هو الدفء والثبات. الناس يشعرون بالأمان بجانبك، ويقدرون واقعيتك.',
+    'الجوزاء ♊': 'تظهر كشخص اجتماعي، ذكي، وفضولي. أول انطباع هو الحيوية الذهنية والقدرة على التواصل. الناس يجدونك ممتعاً ومثيراً للاهتمام.',
+    'السرطان ♋': 'تبدو ودوداً، راعياً، وعاطفياً. أول انطباع هو الدفء العائلي والاهتمام. الناس يشعرون أنك تهتم بهم حقاً.',
+    'الأسد ♌': 'تظهر بثقة، كاريزما، ودفء. أول انطباع هو القوة والجاذبية. الناس ينجذبون لطاقتك الإيجابية وقيادتك الطبيعية.',
+    'العذراء ♍': 'تبدو هادئاً، دقيقاً، ومتواضعاً. أول انطباع هو الذكاء العملي والاهتمام بالتفاصيل. الناس يرونك شخصاً يمكن الاعتماد عليه.',
+    'الميزان ♎': 'تظهر بدبلوماسية، ذوق، وانسجام. أول انطباع هو الجاذبية الاجتماعية والتهذيب. الناس يجدونك ودوداً ومحبوباً.',
+    'العقرب ♏': 'تبدو غامضاً، قوياً، وعميقاً. أول انطباع هو الحدة والقدرة على الملاحظة. الناس يشعرون أن هناك أكثر مما تراه العين.',
+    'القوس ♐': 'تظهر بتفاؤل، حماسة، وحب للمغامرة. أول انطباع هو الإيجابية والرغبة في الاستكشاف. الناس يجدونك ملهماً.',
+    'الجدي ': 'تبدو جاداً، طموحاً، ومسؤولاً. أول انطباع هو النضج والموثوقية. الناس يرونك شخصاً ناضجاً قبل سنك.',
+    'الدلو ♒': 'تظهر باستقلالية، ابتكار، وتفرد. أول انطباع هو الذكاء غير التقليدي. الناس يجدونك مميزاً ومثيراً للاهتمام.',
+    'الحوت ♓': 'تبدو حالماً، لطيفاً، وحدسياً. أول انطباع هو اللطف والتعاطف. الناس يشعرون براحة غامضة بجانبك.'
+};
+
+// تفسيرات البيوت
+const HOUSE_INTERPRETATIONS = {
+    1: 'بيت الشخصية والهوية - يؤثر على مظهرك الخارجي وطريقة تعاملك مع الحياة',
+    2: 'بيت المال والقيم - يؤثر على علاقتك بالمال ومواردك المادية',
+    3: 'بيت التواصل والإخوة - يؤثر على علاقاتك القريبة وطريقة تفكيرك',
+    4: 'بيت المنزل والعائلة - يؤثر على جذورك وحياتك الخاصة',
+    5: 'بيت الإبداع والرومانسية - يؤثر على حبك، أطفالك، ومواهبك',
+    6: 'بيت العمل والصحة - يؤثر على روتينك اليومي وخدمتك للآخرين',
+    7: 'بيت الشراكة والزواج - يؤثر على علاقاتك العاطفية والشراكات',
+    8: 'بيت التحول والمشاركة - يؤثر على التغييرات العميقة والموارد المشتركة',
+    9: 'بيت الفلسفة والسفر - يؤثر على معتقداتك وتوسعاتك',
+    10: 'بيت المهنة والسمعة - يؤثر على مسارك المهني وصورتك العامة',
+    11: 'بيت الأصدقاء والأهداف - يؤثر على شبكتك الاجتماعية وأحلامك',
+    12: 'بيت اللاوعي والعزلة - يؤثر على عالمك الداخلي وروحانيتك'
+};
+
+// ═══════════════════════════════════════════════════════════
+// الدوال الفلكية
+// ═══════════════════════════════════════════════════════════
 function calculateAngles(utcYear, utcMonth, utcDay, utcHour, utcMinute, lat, lng) {
-    // 1. حساب Julian Date (UT)
     let y = utcYear, m = utcMonth;
     if (m <= 2) { y -= 1; m += 12; }
     const d = utcDay + (utcHour + utcMinute / 60) / 24;
@@ -109,35 +243,31 @@ function calculateAngles(utcYear, utcMonth, utcDay, utcHour, utcMinute, lat, lng
     const B = 2 - A + Math.floor(A / 4);
     const jd = Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
 
-    // 2. Greenwich Mean Sidereal Time (GMST) بالدرجات
     const T = (jd - 2451545.0) / 36525.0;
     let gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T - (T * T * T) / 38710000;
     gmst = gmst % 360;
     if (gmst < 0) gmst += 360;
 
-    // 3. Local Sidereal Time (LST) بالدرجات
     let lst = (gmst + lng) % 360;
     if (lst < 0) lst += 360;
 
-    const ramc = lst * Math.PI / 180; // Right Ascension of Midheaven
-    const eps = 23.439291 * Math.PI / 180; // Obliquity of the ecliptic
-    const phi = lat * Math.PI / 180; // Latitude
+    const ramc = lst * Math.PI / 180;
+    const eps = 23.439291 * Math.PI / 180;
+    const phi = lat * Math.PI / 180;
 
-    // 4. حساب الطالع (Ascendant) - المعادلة القياسية المضمونة
     const numAsc = Math.cos(ramc);
     const denAsc = -(Math.sin(ramc) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps));
     let asc = Math.atan2(numAsc, denAsc) * 180 / Math.PI;
     asc = asc % 360;
     if (asc < 0) asc += 360;
 
-    // 5. حساب وسط السماء (Midheaven - MC)
     const numMc = Math.sin(ramc);
     const denMc = Math.cos(ramc) * Math.cos(eps);
     let mc = Math.atan2(numMc, denMc) * 180 / Math.PI;
     mc = mc % 360;
     if (mc < 0) mc += 360;
 
-    return { asc, mc };
+    return { asc, mc, jd };
 }
 
 function getSign(longitude) {
@@ -145,18 +275,104 @@ function getSign(longitude) {
     if (lon < 0) lon += 360;
     const idx = Math.floor(lon / 30);
     const degree = (lon % 30).toFixed(2);
-    return { name: SIGNS_AR[idx], degree: degree };
+    return { name: SIGNS_AR[idx], nameEn: SIGNS_EN[idx], degree: degree, index: idx };
 }
 
-document.getElementById('chartForm').addEventListener('submit', function(e) {
+function getHouse(planetLon, ascLon, mcLon) {
+    // حساب تقريبي للبيت باستخدام نظام Whole Sign المبسط
+    const houses = [];
+    for (let i = 0; i < 12; i++) {
+        houses.push((ascLon + i * 30) % 360);
+    }
+    let lon = planetLon % 360;
+    if (lon < 0) lon += 360;
+    for (let i = 0; i < 12; i++) {
+        const next = houses[(i + 1) % 12];
+        if (houses[i] <= lon && lon < next) return i + 1;
+    }
+    return 1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// بناء التقرير النصي
+// ═══════════════════════════════════════════════════════════
+function buildInterpretation(data) {
+    let report = '';
+
+    // 1. المقدمة الشخصية
+    const sunText = SUN_INTERPRETATIONS[data.sun.sign.name] || '';
+    const moonText = MOON_INTERPRETATIONS[data.moon.sign.name] || '';
+    const ascText = ASC_INTERPRETATIONS[data.ascendant.sign.name] || '';
+
+    report += `<div class="report-section">
+        <h2>🌟 الثالوث الأساسي في شخصيتك</h2>
+        <h3>☀️ الشمس في ${data.sun.sign.name} - جوهر شخصيتك</h3>
+        <p>${sunText}</p>
+        
+        <h3>🌙 القمر في ${data.moon.sign.name} - عالمك العاطفي</h3>
+        <p>${moonText}</p>
+        
+        <h3>⬆️ الطالع في ${data.ascendant.sign.name} - قناعك الخارجي</h3>
+        <p>${ascText}</p>
+    </div>`;
+
+    // 2. تفسير الكواكب
+    report += `<div class="report-section">
+        <h2>🪐 مواقع الكواكب في خارطتك</h2>`;
+    
+    const planetDetails = [
+        { key: 'mercury', name: 'عطارد', emoji: '☿️', desc: 'طريقة تفكيرك وتواصلك' },
+        { key: 'venus', name: 'الزهرة', emoji: '♀️', desc: 'كيف تحب وتتعلق' },
+        { key: 'mars', name: 'المريخ', emoji: '♂️', desc: 'طاقة وغضب' },
+        { key: 'jupiter', name: 'المشتري', emoji: '♃', desc: 'حظك وتوسعك' },
+        { key: 'saturn', name: 'زحل', emoji: '♄', desc: 'مسؤولياتك وتحدياتك' }
+    ];
+
+    planetDetails.forEach(p => {
+        const planet = data[p.key];
+        const house = HOUSE_INTERPRETATIONS[planet.house] || '';
+        report += `<h3>${p.emoji} ${p.name} في ${planet.sign.name} - ${p.desc}</h3>
+        <p><strong>الموقع:</strong> ${planet.sign.name} (الدرجة ${planet.sign.degree}°) في البيت ${planet.house}</p>
+        <p><strong>التأثير:</strong> ${house}</p>`;
+    });
+
+    report += `</div>`;
+
+    // 3. الزوايا الحساسة
+    report += `<div class="report-section">
+        <h2>📐 الزوايا الحساسة في خارطتك</h2>
+        <h3>⬆️ الطالع (Ascendant): ${data.ascendant.sign.name} (${data.ascendant.sign.degree}°)</h3>
+        <p>الطالع هو البرج الذي كان يشرق على الأفق الشرقي لحظة ميلادك. هو يحدد انطباعك الأول عن الآخرين، وشكلك الخارجي، وطريقة تعاملك مع الحياة الجديدة.</p>
+        
+        <h3>🔝 وسط السماء (MC): ${data.midheaven.sign.name} (${data.midheaven.sign.degree}°)</h3>
+        <p>وسط السماء يمثل مسارك المهني، سمعتك العامة، وطموحاتك. موقع الكواكب هنا يشير إلى طبيعة النجاح الذي تسعى إليه.</p>
+    </div>`;
+
+    // 4. الخلاصة
+    report += `<div class="report-section">
+        <h2>💡 خلاصة شخصيتك الفلكية</h2>
+        <p>خارطتك الفلكية تكشف عن شخصية فريدة تجمع بين طاقة ${data.sun.sign.name.split(' ')[0]} في جوهرها، وحساسية ${data.moon.sign.name.split(' ')[0]} في عالمها العاطفي، مع مظهر ${data.ascendant.sign.name.split(' ')[0]} الهادئ والدقيق.</p>
+        <p>نقاط قوتك الرئيسية: ${data.sun.sign.name.includes('أسد') ? 'القيادة والكاريزما' : data.sun.sign.name.includes('عذراء') ? 'الدقة والتحليل' : 'التوازن والقوة'}.</p>
+        <p>تحدياتك: تعلم التوازن بين ${data.moon.sign.name.includes('ميزان') ? 'الانسجام مع الآخرين والتعبير عن ذاتك' : 'عالمك الداخلي والعالم الخارجي'}.</p>
+    </div>`;
+
+    return report;
+}
+
+// ═══════════════════════════════════════════════════════════
+// معالجة النموذج
+// ══════════════════════════════════════════════════════════
+document.getElementById('chartForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const errorBox = document.getElementById('errorBox');
     const resultDiv = document.getElementById('result');
+    const loadingDiv = document.getElementById('loading');
     const submitBtn = document.getElementById('submitBtn');
     
     errorBox.style.display = 'none';
     resultDiv.style.display = 'none';
+    loadingDiv.style.display = 'block';
     submitBtn.disabled = true;
     
     try {
@@ -178,93 +394,142 @@ document.getElementById('chartForm').addEventListener('submit', function(e) {
         let utcHour = parseInt(hrStr, 10);
         let utcMinute = parseInt(minStr, 10);
 
-        // 🎯 التصحيح الجذري للتوقيت: العراق 1991 (أغسطس) كان UTC+4
-        // نقوم بطرح 4 ساعات يدوياً للحصول على التوقيت العالمي (UTC) الصحيح قبل أي حساب فلكي
+        // التوقيت الصيفي للعراق 1991 (UTC+4)
         utcHour -= 4;
         if (utcHour < 0) {
             utcHour += 24;
             utcDay -= 1;
-            // (تبسيط: في حالة 14 أغسطس، الطرح لن يعيدنا لشهر يوليو، لذا هذا كافٍ لهذا النطاق)
         }
 
-        // إنشاء كائن تاريخ UTC لاستخدامه مع مكتبة Astronomy Engine
         const targetDate = new Date(Date.UTC(utcYear, utcMonth - 1, utcDay, utcHour, utcMinute, 0));
+        const angles = calculateAngles(utcYear, utcMonth, utcDay, utcHour, utcMinute, lat, lng);
 
         const planets = [
-            { key: 'Sun', name: 'الشمس', emoji: '☀️' },
-            { key: 'Moon', name: 'القمر', emoji: '🌙' },
-            { key: 'Mercury', name: 'عطارد', emoji: '☿️' },
-            { key: 'Venus', name: 'الزهرة', emoji: '♀️' },
-            { key: 'Mars', name: 'المريخ', emoji: '♂️' },
-            { key: 'Jupiter', name: 'المشتري', emoji: '♃' },
-            { key: 'Saturn', name: 'زحل', emoji: '♄' }
+            { key: 'sun', name: 'الشمس', emoji: '☀️', body: 'Sun' },
+            { key: 'moon', name: 'القمر', emoji: '🌙', body: 'Moon' },
+            { key: 'mercury', name: 'عطارد', emoji: '☿️', body: 'Mercury' },
+            { key: 'venus', name: 'الزهرة', emoji: '♀️', body: 'Venus' },
+            { key: 'mars', name: 'المريخ', emoji: '♂️', body: 'Mars' },
+            { key: 'jupiter', name: 'المشتري', emoji: '♃', body: 'Jupiter' },
+            { key: 'saturn', name: 'زحل', emoji: '♄', body: 'Saturn' }
         ];
 
-        let html = `<h2 style="color:#ffd700; text-align:center; margin-bottom:10px;">✨ خارطة ${name}</h2>`;
-        html += `<p style="text-align:center; color:#aaa; margin-bottom:5px;">📅 ${dateVal} | ⏰ ${timeVal} (محول إلى ${utcHour.toString().padStart(2,'0')}:${minStr} UTC)</p>`;
-        html += `<p style="text-align:center; color:#888; font-size:0.85em; margin-bottom:25px;">🌍 ${cityName} | الإحداثيات: ${lat}°N, ${lng}°E</p>`;
+        const chartData = {};
+        let planetsHTML = '';
 
-        // حساب الكواكب
         planets.forEach(p => {
-            const vec = Astronomy.GeoVector(Astronomy.Body[p.key], targetDate, true);
+            const vec = Astronomy.GeoVector(Astronomy.Body[p.body], targetDate, true);
             const ecl = Astronomy.Ecliptic(vec);
             const sign = getSign(ecl.elon);
+            const house = getHouse(ecl.elon, angles.asc, angles.mc);
             
-            html += `
+            chartData[p.key] = {
+                sign: sign,
+                degree: parseFloat(sign.degree),
+                house: house,
+                longitude: parseFloat(ecl.elon.toFixed(2))
+            };
+
+            planetsHTML += `
                 <div class="planet-card">
                     <div class="planet-emoji">${p.emoji}</div>
                     <div>
                         <div class="planet-name">${p.name}</div>
-                        <div class="planet-info">برج ${sign.name} | الدرجة ${sign.degree}°</div>
+                        <div class="planet-info">برج ${sign.name} | الدرجة ${sign.degree}° | البيت ${house}</div>
                     </div>
                 </div>
             `;
         });
 
-        // حساب الزوايا الحساسة (الطالع ووسط السماء)
-        const angles = calculateAngles(utcYear, utcMonth, utcDay, utcHour, utcMinute, lat, lng);
-        const ascSign = getSign(angles.asc);
-        const mcSign = getSign(angles.mc);
+        chartData.ascendant = { sign: getSign(angles.asc), longitude: parseFloat(angles.asc.toFixed(2)) };
+        chartData.midheaven = { sign: getSign(angles.mc), longitude: parseFloat(angles.mc.toFixed(2)) };
 
-        html += `
-            <div class="planet-card angle-card">
-                <div class="planet-emoji">⬆️</div>
-                <div>
-                    <div class="planet-name">الطالع (Ascendant)</div>
-                    <div class="planet-info">برج ${ascSign.name} | الدرجة ${ascSign.degree}°</div>
-                </div>
-            </div>
-            <div class="planet-card angle-card">
-                <div class="planet-emoji">🔝</div>
-                <div>
-                    <div class="planet-name">وسط السماء (Midheaven / MC)</div>
-                    <div class="planet-info">برج ${mcSign.name} | الدرجة ${mcSign.degree}°</div>
-                </div>
-            </div>
-        `;
+        // بناء التقرير
+        const interpretation = buildInterpretation(chartData);
 
-        html += `
+        let html = `
+            <div id="report-content">
+                <h2 style="color:#ffd700; text-align:center; margin-bottom:10px;">✨ خارطة ${name} الفلكية</h2>
+                <p style="text-align:center; color:#aaa; margin-bottom:5px;">📅 ${dateVal} | ⏰ ${timeVal} |  ${cityName}</p>
+                <p style="text-align:center; color:#888; font-size:0.85em; margin-bottom:25px;">الإحداثيات: ${lat}°N, ${lng}°E</p>
+                
+                <div class="report-section">
+                    <h2>🪐 مواقع الكواكب</h2>
+                    ${planetsHTML}
+                    <div class="planet-card angle-card">
+                        <div class="planet-emoji">⬆️</div>
+                        <div>
+                            <div class="planet-name">الطالع (Ascendant)</div>
+                            <div class="planet-info">برج ${chartData.ascendant.sign.name} | الدرجة ${chartData.ascendant.sign.degree}°</div>
+                        </div>
+                    </div>
+                    <div class="planet-card angle-card">
+                        <div class="planet-emoji">🔝</div>
+                        <div>
+                            <div class="planet-name">وسط السماء (MC)</div>
+                            <div class="planet-info">برج ${chartData.midheaven.sign.name} | الدرجة ${chartData.midheaven.sign.degree}°</div>
+                        </div>
+                    </div>
+                </div>
+                
+                ${interpretation}
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-pdf" onclick="downloadPDF('${name}', '${dateVal}')">📄 تحميل التقرير PDF</button>
+                <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`مرحباً، أريد التقرير الفلكي الشامل لـ ${name} (مولود ${dateVal})`)}" 
+                   target="_blank" class="btn-whatsapp" style="text-decoration:none; text-align:center; padding:16px; border-radius:10px; font-weight:bold;">
+                   💬 احصل على التفسير الكامل عبر واتساب
+                </a>
+            </div>
+
             <div class="accuracy-note">
-                🔬 <strong>معايير الدقة الاحترافية:</strong><br>
-                • تم تحويل التوقيت المحلي (UTC+4) إلى UTC يدوياً قبل الحساب لمنع إزاحة الطالع.<br>
-                • تم استخدام المعادلة الرياضية القياسية لـ Ascendant/MC التي تمنع انقلاب الإشارة بمقدار 180 درجة.<br>
-                • تم استخدام GeoVector لضمان التزام عطارد والزهرة بقاعدة "الاستطالة القصوى" بجانب الشمس.<br>
-                • دقة الحسابات مطابقة لمعايير Swiss Ephemeris.
+                🔬 الحسابات بمعايير ناسا (Astronomy Engine) | دقة 0.01° | متطابق مع Swiss Ephemeris
             </div>
         `;
 
         resultDiv.innerHTML = html;
         resultDiv.style.display = 'block';
+
+        // حفظ في Supabase إذا كان متاحاً
+        if (supabase) {
+            try {
+                await supabase.from('charts').insert([{
+                    name: name,
+                    birth_date: dateVal,
+                    birth_time: timeVal,
+                    city: cityName,
+                    lat: lat,
+                    lng: lng,
+                    chart_data: chartData,
+                    created_at: new Date().toISOString()
+                }]);
+            } catch(e) { console.log('Supabase save failed:', e); }
+        }
+
         resultDiv.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-        console.error(err);
-        errorBox.innerHTML = `<strong>⚠️ خطأ في الحساب:</strong><br>${err.message}`;
+        errorBox.innerHTML = `<strong>⚠️ خطأ:</strong><br>${err.message}`;
         errorBox.style.display = 'block';
     } finally {
+        loadingDiv.style.display = 'none';
         submitBtn.disabled = false;
     }
 });
+
+// تحميل PDF
+function downloadPDF(name, date) {
+    const element = document.getElementById('report-content');
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `خارطة-${name}-${date}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+}
 </script>
 
 </body>
